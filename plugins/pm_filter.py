@@ -927,27 +927,27 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     await query.answer(url=f"https://telegram.me/{temp.U_NAME}?start={ident}_{file_id}")
                     return
                 else:
-                    await query.answer(f"Hᴇʏ {query.from_user.first_name}, Tʜɪs Is Nᴏᴛ Yᴏᴜʀ Mᴏᴠɪᴇ Rᴇǫᴜᴇsᴛ. Rᴇǫᴜᴇsᴛ Yᴏᴜʀ's !", show_alert=True)
+                    await query.answer(f"ᴛʜᴀᴍᴘɪ🧐{query.from_user.first_name},\n 😮‍💨ᴜɴɴᴀ ɴɪɴᴀᴄʜᴀ ᴇɴᴀᴋᴋᴜ ᴠᴇᴛʜᴀɴᴀɪʏᴀ ɪʀᴜᴋᴋᴜ ᴏʀᴜ ʙᴏᴏᴋ ᴋᴏᴏᴅᴀᴠᴀ ꜱᴏɴᴛʜᴀᴍᴀ ᴛʜᴇᴅᴀ ᴍᴀᴛᴛᴀ🤯.....", show_alert=True)
             elif settings['botpm'] and settings['is_shortlink'] and clicked not in PREMIUM_USER:
                 if clicked == typed:
                     temp.SHORT[clicked] = query.message.chat.id
                     await query.answer(url=f"https://telegram.me/{temp.U_NAME}?start=short_{file_id}")
                     return
                 else:
-                    await query.answer(f"Hᴇʏ {query.from_user.first_name}, Tʜɪs Is Nᴏᴛ Yᴏᴜʀ Mᴏᴠɪᴇ Rᴇǫᴜᴇsᴛ. Rᴇǫᴜᴇsᴛ Yᴏᴜʀ's !", show_alert=True)
+                    await query.answer(f"ᴛʜᴀᴍᴘɪ🧐{query.from_user.first_name},\n 😮‍💨ᴜɴɴᴀ ɴɪɴᴀᴄʜᴀ ᴇɴᴀᴋᴋᴜ ᴠᴇᴛʜᴀɴᴀɪʏᴀ ɪʀᴜᴋᴋᴜ ᴏʀᴜ ʙᴏᴏᴋ ᴋᴏᴏᴅᴀᴠᴀ ꜱᴏɴᴛʜᴀᴍᴀ ᴛʜᴇᴅᴀ ᴍᴀᴛᴛᴀ🤯.....", show_alert=True)
             elif settings['is_shortlink'] and not settings['botpm'] and clicked not in PREMIUM_USER:
                 if clicked == typed:
                     temp.SHORT[clicked] = query.message.chat.id
                     await query.answer(url=f"https://telegram.me/{temp.U_NAME}?start=short_{file_id}")
                     return
                 else:
-                    await query.answer(f"Hᴇʏ {query.from_user.first_name}, Tʜɪs Is Nᴏᴛ Yᴏᴜʀ Mᴏᴠɪᴇ Rᴇǫᴜᴇsᴛ. Rᴇǫᴜᴇsᴛ Yᴏᴜʀ's !", show_alert=True)
+                    await query.answer(f"ᴛʜᴀᴍᴘɪ🧐{query.from_user.first_name},\n 😮‍💨ᴜɴɴᴀ ɴɪɴᴀᴄʜᴀ ᴇɴᴀᴋᴋᴜ ᴠᴇᴛʜᴀɴᴀɪʏᴀ ɪʀᴜᴋᴋᴜ ᴏʀᴜ ʙᴏᴏᴋ ᴋᴏᴏᴅᴀᴠᴀ ꜱᴏɴᴛʜᴀᴍᴀ ᴛʜᴇᴅᴀ ᴍᴀᴛᴛᴀ🤯...", show_alert=True)
             elif settings['botpm'] or clicked in PREMIUM_USER:
                 if clicked == typed:
                     await query.answer(url=f"https://telegram.me/{temp.U_NAME}?start={ident}_{file_id}")
                     return
                 else:
-                    await query.answer(f"Hᴇʏ {query.from_user.first_name}, Tʜɪs Is Nᴏᴛ Yᴏᴜʀ Mᴏᴠɪᴇ Rᴇǫᴜᴇsᴛ. Rᴇǫᴜᴇsᴛ Yᴏᴜʀ's !", show_alert=True)
+                    await query.answer(f"ᴛʜᴀᴍᴘɪ🧐{query.from_user.first_name},\n 😮‍💨ᴜɴɴᴀ ɴɪɴᴀᴄʜᴀ ᴇɴᴀᴋᴋᴜ ᴠᴇᴛʜᴀɴᴀɪʏᴀ ɪʀᴜᴋᴋᴜ ᴏʀᴜ ʙᴏᴏᴋ ᴋᴏᴏᴅᴀᴠᴀ ꜱᴏɴᴛʜᴀᴍᴀ ᴛʜᴇᴅᴀ ᴍᴀᴛᴛᴀ🤯...", show_alert=True)
             else:
                 if clicked == typed:
                     y=await client.send_cached_media(
@@ -964,7 +964,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                         )
                     )
                 else:
-                    await query.answer(f"Hᴇʏ {query.from_user.first_name}, Tʜɪs Is Nᴏᴛ Yᴏᴜʀ Mᴏᴠɪᴇ Rᴇǫᴜᴇsᴛ. Rᴇǫᴜᴇsᴛ Yᴏᴜʀ's !", show_alert=True)
+                    await query.answer(f"ᴛʜᴀᴍᴘɪ🧐{query.from_user.first_name},\n 😮‍💨ᴜɴɴᴀ ɴɪɴᴀᴄʜᴀ ᴇɴᴀᴋᴋᴜ ᴠᴇᴛʜᴀɴᴀɪʏᴀ ɪʀᴜᴋᴋᴜ ᴏʀᴜ ʙᴏᴏᴋ ᴋᴏᴏᴅᴀᴠᴀ ꜱᴏɴᴛʜᴀᴍᴀ ᴛʜᴇᴅᴀ ᴍᴀᴛᴛᴀ🤯...", show_alert=True)
                 await query.answer('Cʜᴇᴄᴋ PM, I ʜᴀᴠᴇ sᴇɴᴛ ғɪʟᴇs ɪɴ PM', show_alert=True)
                 await asyncio.sleep(600)
                 await y.delete()
