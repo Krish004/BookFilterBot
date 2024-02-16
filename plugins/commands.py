@@ -153,9 +153,12 @@ async def start(client, message):
                     protect_content=msg.get('protect', False),
                     reply_markup=InlineKeyboardMarkup(
                         [
-                         [
-                          InlineKeyboardButton('🍁 Uᴘᴅᴀᴛᴇ', url=f'https://t.me/eTamilBooks')
-                         ]
+                            [
+                                InlineKeyboardButton('🌿 Sᴜᴘᴘᴏʀᴛ Gʀᴏᴜᴘ', url=f'https://t.me/{SUPPORT_CHAT}'),
+                                InlineKeyboardButton('📢 ᴍᴀɪɴ Cʜᴀɴɴᴇʟ', url=CHNL_LNK)
+                            ],[
+                                InlineKeyboardButton('🧑‍💻 Oᴡɴᴇʀ', url="https://t.me/SaravanaKrish")
+                            ]                            
                         ]
                     )
                 )
@@ -169,9 +172,12 @@ async def start(client, message):
                     protect_content=msg.get('protect', False),
                     reply_markup=InlineKeyboardMarkup(
                         [
-                         [
-                          InlineKeyboardButton('🍁 Uᴘᴅᴀᴛᴇ', url=f'https://t.me/eTamilBooks')
-                         ]
+                            [
+                                InlineKeyboardButton('🌿 Sᴜᴘᴘᴏʀᴛ Gʀᴏᴜᴘ', url=f'https://t.me/{SUPPORT_CHAT}'),
+                                InlineKeyboardButton('📢 ᴍᴀɪɴ Cʜᴀɴɴᴇʟ', url=CHNL_LNK)
+                            ],[
+                                InlineKeyboardButton('🧑‍💻 Oᴡɴᴇʀ', url="https://t.me/SaravanaKrish")
+                            ]                            
                         ]
                     )
                 )
@@ -329,13 +335,16 @@ async def start(client, message):
                 caption=f_caption,
                 protect_content=True if pre == 'filep' else False,
                 reply_markup=InlineKeyboardMarkup(
-                    [
-                     [
-                      InlineKeyboardButton('🍁 Uᴘᴅᴀᴛᴇ', url=f'https://t.me/eTamilBooks')
-                     ]
-                    ]
+                        [
+                         [
+                          InlineKeyboardButton('🌿 Sᴜᴘᴘᴏʀᴛ Gʀᴏᴜᴘ', url=f'https://t.me/{SUPPORT_CHAT}'),
+                          InlineKeyboardButton('📢 ᴍᴀɪɴ Cʜᴀɴɴᴇʟ', url=CHNL_LNK)
+                       ],[
+                          InlineKeyboardButton("🧑‍💻 Oᴡɴᴇʀ", url="t.me/SaravanKrish")
+                         ]
+                        ]
+                    )
                 )
-            )
             filesarr.append(msg)
         k = await client.send_message(chat_id = message.from_user.id, text=f"<b><u>❗️❗️❗️IMPORTANT❗️️❗️❗️</u></b>\n\nThis Movie Files/Videos will be deleted in <b><u>10 mins</u> 🫥 <i></b>(Due to Copyright Issues)</i>.\n\n<b><i>Please forward this ALL Files/Videos to your Saved Messages and Start Download there.\n\nஇந்தப் புத்தகக் கோப்புகள் <b><u>10 நிமிடங்களில் நீக்கப்படும்</u> 🫥 <i></b>(பதிப்புரிமைச் சிக்கல்கள் காரணமாக )</i>.\n\n<b><i>இந்த எல்லா கோப்புகளையும்/வீடியோக்களையும் உங்கள் சேமித்த செய்திகளுக்கு அனுப்பி, அங்கே பதிவிறக்கத்தை தொடங்கவும்</i></b>")
         await asyncio.sleep(600)
