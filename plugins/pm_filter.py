@@ -2021,7 +2021,7 @@ async def auto_filter(client, msg, spoll=False):
         await asyncio.sleep(5)
         await dlt.delete()
         settings = await get_settings(message.chat.id)
-        await msg.message.delete()
+       # await msg.message.delete()
     # if 'is_shortlink' in settings.keys():
     #     ENABLE_SHORTLINK = settings['is_shortlink']
     # else:
