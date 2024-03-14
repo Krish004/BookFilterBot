@@ -1989,7 +1989,7 @@ async def auto_filter(client, msg, spoll=False):
             btn = [[
                     InlineKeyboardButton(f"Searching  🔍  for {search}", url=CHNL_LNK)
                     ]]
-            t = await message.reply_sticker('CAACAgQAAxkBAAJmcmWH4F2JtnTYhn5sQDZDYdC0tUPgAAL6FgACpvFxHkyKzYENX-WBHgQ', reply_markup=InlineKeyboardMarkup(btn))
+            t = await message.reply_sticker('CAACAgEAAxkBAAELsPll8t5cvdA0V5gLXO8f0u-j3LPe5wACGgIAAgnI4EWYH_K8RgwSezQE', reply_markup=InlineKeyboardMarkup(btn))
             await asyncio.sleep(5)
             await t.delete()
             search = search.lower()
@@ -2025,7 +2025,7 @@ async def auto_filter(client, msg, spoll=False):
         btn = [[
                     InlineKeyboardButton(f"Searching  🔍  for {search}", url=CHNL_LNK)
                     ]]
-        dlt = await message.reply_sticker('CAACAgQAAxkBAAJmcmWH4F2JtnTYhn5sQDZDYdC0tUPgAAL6FgACpvFxHkyKzYENX-WBHgQ', reply_markup=InlineKeyboardMarkup(btn))
+        dlt = await message.reply_sticker('CAACAgEAAxkBAAELsPll8t5cvdA0V5gLXO8f0u-j3LPe5wACGgIAAgnI4EWYH_K8RgwSezQE', reply_markup=InlineKeyboardMarkup(btn))
         await asyncio.sleep(5)
         await dlt.delete()
         settings = await get_settings(message.chat.id)
@@ -2229,6 +2229,7 @@ async def auto_filter(client, msg, spoll=False):
                 await message.delete()
     else:
         fuk = await message.reply_text(text=cap, reply_markup=InlineKeyboardMarkup(btn), disable_web_page_preview=True)
+        await asyncio.sleep(600)
         await message.delete()
         try:
             if settings['auto_delete']:
