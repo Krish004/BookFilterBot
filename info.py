@@ -45,7 +45,7 @@ NO_RESULTS_MSG = bool(environ.get("NO_RESULTS_MSG", True))
 
 # MongoDB information
 DATABASE_URI = environ.get('DATABASE_URI', "mongodb+srv://Tamilseries:Tamilseries@cluster0.avx8u.mongodb.net/")
-DATABASE_NAME = environ.get('DATABASE_NAME', "BooksBot")
+DATABASE_NAME = environ.get('DATABASE_NAME', "Tamilseries")
 COLLECTION_NAME = environ.get('COLLECTION_NAME', 'Telegram_files')
 
 # Others
