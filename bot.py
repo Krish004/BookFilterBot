@@ -104,5 +104,10 @@ class Bot(Client):
                 current += 1
 
 
-app = Bot()
-app.run()
+# app = Bot()
+# app.run()
+if __name__ == '__main__':
+    try:
+        loop.run_until_complete(start())
+    except KeyboardInterrupt:
+        logging.info('Service Stopped Bye 👋')
