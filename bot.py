@@ -17,11 +17,13 @@ from typing import Union, Optional, AsyncGenerator
 from pyrogram import types
 from Script import script 
 from datetime import date, datetime 
-import pytz
+import pytz, asyncio
 from aiohttp import web
 from plugins import web_server
 from pyrogram.errors import FloodWait
 from pyrogram.errors import RPCError
+
+loop = asyncio.get_event_loop()
 
 class Bot(Client):
 
