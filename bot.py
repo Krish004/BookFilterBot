@@ -106,5 +106,5 @@ class Bot(Client):
                 current += 1
 
 
-await app = Bot()
-app.start()
+app = Bot()
+await app.start()
