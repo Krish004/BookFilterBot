@@ -23,7 +23,7 @@ from plugins import web_server
 from pyrogram.errors import FloodWait
 from pyrogram.errors import RPCError
 
-loop = asyncio.get_event_loop()
+# loop = asyncio.get_event_loop()
 
 class Bot(Client):
 
