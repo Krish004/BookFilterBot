@@ -107,4 +107,4 @@ class Bot(Client):
 
 
 app = Bot()
-app.run(use_qr=True)
+app.run()
