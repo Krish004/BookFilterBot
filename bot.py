@@ -107,4 +107,4 @@ class Bot(Client):
 
 
 app = Bot()
-await app.start()
+app.run()
