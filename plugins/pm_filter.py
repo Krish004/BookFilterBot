@@ -48,7 +48,7 @@ SPELL_CHECK = {}
 @Client.on_message(filters.group & filters.text & filters.incoming)
 async def give_filter(client, message):
     try:
-        await message.react(emoji=random.choice(EMOJIS))
+        await message.react(emoji=random.choice(EMOJIS), big=True)
     except Exception:
         pass
     if message.chat.id != SUPPORT_CHAT_ID:
@@ -75,7 +75,7 @@ async def give_filter(client, message):
 @Client.on_message(filters.private & filters.text & filters.incoming)
 async def pm_text(bot, message):
     try:
-        await message.react(emoji=random.choice(EMOJIS))
+        await message.react(emoji=random.choice(EMOJIS), big=True)
     except Exception:
         pass
     content = message.text
@@ -121,12 +121,8 @@ async def next_page(bot, query):
     temp.GETALL[key] = files
     temp.SHORT[query.from_user.id] = query.message.chat.id
     settings = await get_settings(query.message.chat.id)
-    # if 'is_shortlink' in settings.keys():
-    #     ENABLE_SHORTLINK = settings['is_shortlink']
-    # else:
-    #     await save_group_settings(query.message.chat.id, 'is_shortlink', False)
-    #     ENABLE_SHORTLINK = False
-    pre = 'filep' if settings['file_secure'] else 'file'
+    # pre = 'filep' if settings['file_secure'] else 'file'
+    pre = 'file'
     if settings['button']:
         btn = [
             [
@@ -136,19 +132,6 @@ async def next_page(bot, query):
             ]
             for file in files
         ]
-    # else:
-    #     btn = [
-    #         [
-    #             InlineKeyboardButton(
-    #                 text=f"{' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@') and not x.startswith('www.'), file.file_name.split()))}", callback_data=f'files#{file.file_id}'
-    #             ),
-    #             InlineKeyboardButton(
-    #                 text=f"{get_size(file.file_size)}",
-    #                 callback_data=f'files_#{file.file_id}',
-    #             ),
-    #         ]
-    #         for file in files
-    #     ]
 
         btn.insert(0, 
             [
@@ -228,19 +211,7 @@ async def next_page(bot, query):
                     InlineKeyboardButton("𝐍𝐄𝐗𝐓 ➪", callback_data=f"next_{req}_{key}_{n_offset}")
                 ],
             )
-    # if ENABLE_SHORTLINK == True:
-        # btn.insert(0, [
-        #     InlineKeyboardButton("Sᴛᴀʀᴛ Bᴏᴛ", url=f"https://telegram.me/{temp.U_NAME}"),
-        #     InlineKeyboardButton("𝐒𝐞𝐧𝐝 𝐀𝐥𝐥", callback_data=f"sendfiles#{key}")
-        # ])
-    # else:
-    #     btn.insert(0, [
-    #         InlineKeyboardButton("Sᴛᴀʀᴛ Bᴏᴛ", url=f"https://telegram.me/{temp.U_NAME}"),
-    #         InlineKeyboardButton("𝐒𝐞𝐧𝐝 𝐀𝐥𝐥", callback_data=f"send_fall#{pre}#{key}#{offset}")
-    #     ])
-    # btn.insert(0, [
-    #     InlineKeyboardButton("Hᴏᴡ ᴛᴏ Dᴏᴡɴʟᴏᴀᴅ⚡", url=await get_tutorial(query.message.chat.id))
-    # ])
+            
     cur_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
     time_difference = timedelta(hours=cur_time.hour, minutes=cur_time.minute, seconds=(cur_time.second+(cur_time.microsecond/1000000))) - timedelta(hours=curr_time.hour, minutes=curr_time.minute, seconds=(curr_time.second+(curr_time.microsecond/1000000)))
     remaining_seconds = "{:.2f}".format(time_difference.total_seconds())
@@ -346,11 +317,6 @@ async def languages_cb_handler(client: Client, query: CallbackQuery):
     except:
         pass
     _, key = query.data.split("#")
-    # if BUTTONS.get(key+"1")!=None:
-    #     search = BUTTONS.get(key+"1")
-    # else:
-    #     search = BUTTONS.get(key)
-    #     BUTTONS[key+"1"] = search
     search = FRESH.get(key)
     search = search.replace(' ', '_')
     btn = []
@@ -414,12 +380,8 @@ async def filter_languages_cb_handler(client: Client, query: CallbackQuery):
         return
     temp.GETALL[key] = files
     settings = await get_settings(message.chat.id)
-    # if 'is_shortlink' in settings.keys():
-    #     ENABLE_SHORTLINK = settings['is_shortlink']
-    # else:
-    #     await save_group_settings(message.chat.id, 'is_shortlink', False)
-    #     ENABLE_SHORTLINK = False
-    pre = 'filep' if settings['file_secure'] else 'file'
+    # pre = 'filep' if settings['file_secure'] else 'file'
+    pre = 'file'
     if settings["button"]:
         btn = [
             [
@@ -513,19 +475,6 @@ async def filter_languages_cb_handler(client: Client, query: CallbackQuery):
     except MessageNotModified:
         pass
     await query.answer()
-    # if lang != "homepage":
-    #     offset = 0
-        
-    #     btn.append(        [
-    #             InlineKeyboardButton(
-    #                 text="↭ ʙᴀᴄᴋ ᴛᴏ ꜰɪʟᴇs ​↭",
-    #                 callback_data=f"fl#homepage#search#{key}"
-    #                 ),
-    #         ])
-    
-    
-    #     await query.edit_message_reply_markup(reply_markup=InlineKeyboardMarkup(btn))
-    
     
     
 @Client.on_callback_query(filters.regex(r"^seasons#"))
@@ -541,11 +490,6 @@ async def seasons_cb_handler(client: Client, query: CallbackQuery):
         pass
     
     _, key = query.data.split("#")
-    # if BUTTONS.get(key+"2")!=None:
-    #     search = BUTTONS.get(key+"2")
-    # else:
-    #     search = BUTTONS.get(key)
-    #     BUTTONS[key+"2"] = search
     search = FRESH.get(key)
     BUTTONS[key] = None
     search = search.replace(' ', '_')
@@ -638,12 +582,8 @@ async def filter_seasons_cb_handler(client: Client, query: CallbackQuery):
         return
     temp.GETALL[key] = files
     settings = await get_settings(message.chat.id)
-    # if 'is_shortlink' in settings.keys():
-    #     ENABLE_SHORTLINK = settings['is_shortlink']
-    # else:
-    #     await save_group_settings(message.chat.id, 'is_shortlink', False)
-    #     ENABLE_SHORTLINK = False
-    pre = 'filep' if settings['file_secure'] else 'file'
+    # pre = 'filep' if settings['file_secure'] else 'file'
+    pre = 'file'
     if settings["button"]:
         btn = [
             [
@@ -928,54 +868,39 @@ async def cb_handler(client: Client, query: CallbackQuery):
             f_caption = f_caption
         if f_caption is None:
             f_caption = f"{files.file_name}"
-
+           
         try:
-            if AUTH_CHANNEL and not await is_subscribed(client, query):
-                if clicked == typed:
-                    await query.answer(url=f"https://telegram.me/{temp.U_NAME}?start={ident}_{file_id}")
-                    return
-                else:
-                    await query.answer(f"ᴛʜᴀᴍᴘɪ🧐{query.from_user.first_name},\n 😮‍💨ᴜɴɴᴀ ɴɪɴᴀᴄʜᴀ ᴇɴᴀᴋᴋᴜ ᴠᴇᴛʜᴀɴᴀɪʏᴀ ɪʀᴜᴋᴋᴜ ᴏʀᴜ ʙᴏᴏᴋ ᴋᴏᴏᴅᴀᴠᴀ ꜱᴏɴᴛʜᴀᴍᴀ ᴛʜᴇᴅᴀ ᴍᴀᴛᴛᴀ🤯.....", show_alert=True)
-            elif settings['botpm'] and settings['is_shortlink'] and clicked not in PREMIUM_USER:
-                if clicked == typed:
-                    temp.SHORT[clicked] = query.message.chat.id
-                    await query.answer(url=f"https://telegram.me/{temp.U_NAME}?start=short_{file_id}")
-                    return
-                else:
-                    await query.answer(f"ᴛʜᴀᴍᴘɪ🧐{query.from_user.first_name},\n 😮‍💨ᴜɴɴᴀ ɴɪɴᴀᴄʜᴀ ᴇɴᴀᴋᴋᴜ ᴠᴇᴛʜᴀɴᴀɪʏᴀ ɪʀᴜᴋᴋᴜ ᴏʀᴜ ʙᴏᴏᴋ ᴋᴏᴏᴅᴀᴠᴀ ꜱᴏɴᴛʜᴀᴍᴀ ᴛʜᴇᴅᴀ ᴍᴀᴛᴛᴀ🤯.....", show_alert=True)
-            elif settings['is_shortlink'] and not settings['botpm'] and clicked not in PREMIUM_USER:
-                if clicked == typed:
-                    temp.SHORT[clicked] = query.message.chat.id
-                    await query.answer(url=f"https://telegram.me/{temp.U_NAME}?start=short_{file_id}")
-                    return
-                else:
-                    await query.answer(f"ᴛʜᴀᴍᴘɪ🧐{query.from_user.first_name},\n 😮‍💨ᴜɴɴᴀ ɴɪɴᴀᴄʜᴀ ᴇɴᴀᴋᴋᴜ ᴠᴇᴛʜᴀɴᴀɪʏᴀ ɪʀᴜᴋᴋᴜ ᴏʀᴜ ʙᴏᴏᴋ ᴋᴏᴏᴅᴀᴠᴀ ꜱᴏɴᴛʜᴀᴍᴀ ᴛʜᴇᴅᴀ ᴍᴀᴛᴛᴀ🤯...", show_alert=True)
-            elif settings['botpm'] or clicked in PREMIUM_USER:
-                if clicked == typed:
-                    await query.answer(url=f"https://telegram.me/{temp.U_NAME}?start={ident}_{file_id}")
-                    return
-                else:
-                    await query.answer(f"ᴛʜᴀᴍᴘɪ🧐{query.from_user.first_name},\n 😮‍💨ᴜɴɴᴀ ɴɪɴᴀᴄʜᴀ ᴇɴᴀᴋᴋᴜ ᴠᴇᴛʜᴀɴᴀɪʏᴀ ɪʀᴜᴋᴋᴜ ᴏʀᴜ ʙᴏᴏᴋ ᴋᴏᴏᴅᴀᴠᴀ ꜱᴏɴᴛʜᴀᴍᴀ ᴛʜᴇᴅᴀ ᴍᴀᴛᴛᴀ🤯...", show_alert=True)
-            else:
-                if clicked == typed:
-                    y=await client.send_cached_media(
-                        chat_id=query.from_user.id,
-                        file_id=file_id,
-                        caption=f_caption,
-                        protect_content=True if ident == "filep" else False,
-                        reply_markup=InlineKeyboardMarkup(
+            if clicked == typed:
+                file_send = await client.send_cached_media(
+                    chat_id=FILE_FORWARD,
+                    file_id=file_id,
+                    caption=script.CHANNEL_CAP.format(query.from_user.mention, title, query.message.chat.title),
+                #    protect_content=True if ident == "filep" else False,
+                    reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("📢 Channel", url=CHNL_LNK),  # we download Link
+                                                                            InlineKeyboardButton('📽️ Group', url=GRP_LNK)]])  # web stream Link
+                )
+                Joel_tgx = await query.message.reply_text(
+                    text=script.FILE_MSG.format(query.from_user.mention, title, size),
+                    parse_mode=enums.ParseMode.HTML,
+                    reply_markup=InlineKeyboardMarkup(
+                        [
                             [
-                             [
-                              InlineKeyboardButton('🍁 Uᴘᴅᴀᴛᴇ', url=f'https://t.me/TamiBots')
-                             ]
+                                InlineKeyboardButton('📥 𝖣𝗈𝗐𝗇𝗅𝗈𝖺𝖽 𝖫𝗂𝗇𝗄 📥 ', url=file_send.link)
+                            ], [
+                                InlineKeyboardButton("⚠️ 𝖢𝖺𝗇'𝗍 𝖠𝖼𝖼𝖾𝗌𝗌 ❓ 𝖢𝗅𝗂𝖼𝗄 𝖧𝖾𝗋𝖾 ⚠️", url=f'https://t.me/Tamil5k')
                             ]
-                        )
+                        ]
                     )
-                else:
-                    await query.answer(f"ᴛʜᴀᴍᴘɪ🧐{query.from_user.first_name},\n 😮‍💨ᴜɴɴᴀ ɴɪɴᴀᴄʜᴀ ᴇɴᴀᴋᴋᴜ ᴠᴇᴛʜᴀɴᴀɪʏᴀ ɪʀᴜᴋᴋᴜ ᴏʀᴜ ʙᴏᴏᴋ ᴋᴏᴏᴅᴀᴠᴀ ꜱᴏɴᴛʜᴀᴍᴀ ᴛʜᴇᴅᴀ ᴍᴀᴛᴛᴀ🤯...", show_alert=True)
-                await query.answer('Cʜᴇᴄᴋ PM, I ʜᴀᴠᴇ sᴇɴᴛ ғɪʟᴇs ɪɴ PM', show_alert=True)
-                await asyncio.sleep(600)
-                await y.delete()
+                )
+                if settings['auto_delete']:
+                    await asyncio.sleep(600)
+                    await Joel_tgx.delete()
+                    await file_send.delete()
+            else:
+                await query.answer(
+                    f"ᴛʜᴀᴍᴘɪ🧐{query.from_user.first_name},\n 😮‍💨ᴜɴɴᴀ ɴɪɴᴀᴄʜᴀ ᴇɴᴀᴋᴋᴜ ᴠᴇᴛʜᴀɴᴀɪʏᴀ ɪʀᴜᴋᴋᴜ ᴏʀᴜ ʙᴏᴏᴋ ᴋᴏᴏᴅᴀᴠᴀ ꜱᴏɴᴛʜᴀᴍᴀ ᴛʜᴇᴅᴀ ᴍᴀᴛᴛᴀ🤯...", 
+                    show_alert=True)
+            await query.answer('Cʜᴇᴄᴋ PM, I ʜᴀᴠᴇ sᴇɴᴛ ғɪʟᴇs ɪɴ PM', show_alert=True)
         except UserIsBlocked:
             await query.answer('Uɴʙʟᴏᴄᴋ ᴛʜᴇ ʙᴏᴛ ᴍᴀʜɴ !', show_alert=True)
         except PeerIdInvalid:
