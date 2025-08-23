@@ -946,7 +946,44 @@ async def cb_handler(client: Client, query: CallbackQuery):
             f_caption = f_caption
         if f_caption is None:
             f_caption = f"{files.file_name}"
-        await query.answer(url=f"https://telegram.me/{temp.U_NAME}?start=file_{file_id}")
+        try:
+            # Send the file directly to the FILE_FORWARD channel
+            file_sendd = await client.send_cached_media(
+                chat_id=FILE_FORWARD,
+                file_id=file_id,
+                caption=f_caption,
+         #       protect_content=True if ident == "filep" else False,  # Adjust as needed
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("📢 Channel", url=CHNL_LNK),  # we download Link
+                                                    InlineKeyboardButton('📽️ Group', url=GRP_LNK)]])  # web stream Link
+            )
+            Joel_tmx = await query.message.reply_text(
+                text=script.FILE_MSG.format(query.from_user.mention, title, size),
+                parse_mode=enums.ParseMode.HTML,
+                reply_markup=InlineKeyboardMarkup(
+                    [
+                        [
+                            InlineKeyboardButton('📥 𝖣𝗈𝗐𝗇𝗅𝗈𝖺𝖽 𝖫𝗂𝗇𝗄 📥 ', url=file_send.link)
+                        ], [
+                        InlineKeyboardButton("⚠️ 𝖢𝖺𝗇'𝗍 𝖠𝖼𝖼𝖾𝗌𝗌 ❓ 𝖢𝗅𝗂𝖼𝗄 𝖧𝖾𝗋𝖾 ⚠️", url=f'https://t.me/Tamil5k')
+                    ]
+                    ]
+                )
+            )
+            if settings['auto_delete']:
+                await asyncio.sleep(600)
+                await Joel_tmx.delete()
+                await file_sendd.delete()
+            # Notify the user in the group chat
+            await query.answer('File has been sent to the channel.', show_alert=True)
+
+        except UserIsBlocked:
+            await query.answer('𝐔𝐧𝐛𝐥𝐨𝐜𝐤 𝐭𝐡𝐞 𝐛𝐨𝐭 𝐦𝐚𝐡𝐧 !', show_alert=True)
+        except PeerIdInvalid:
+            await query.answer('Invalid file ID.', show_alert=True)
+        except Exception as e:
+            logger.exception(e)
+            await query.answer('An error occurred while processing your request.', show_alert=True)
+        
     
     elif query.data.startswith("checksub"):
         links = await is_subscribed(client, query=query)
