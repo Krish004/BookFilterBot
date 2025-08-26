@@ -1,69 +1,70 @@
-# https://github.com/KurimuzonAkuma/pyrogram/archive/dev.zip
+# --- Pyrogram Core ---
 pyrogram
 tgcrypto<=1.2.3 
+
+# --- Database ---
 pymongo[srv]==3.12.3 
 motor==2.5.1 
 marshmallow==3.14.1 
 umongo==3.0.1 
+
+# --- Parsing / Requests ---
 requests 
 bs4 
-git+https://github.com/Joelkb/cinemagoer 
 shortzy 
-datetime 
-pytz 
 aiohttp<=3.8.2
+ujson 
+wget 
+dnspython==2.3.0
+python-decouple
 
-#---master---# 
-#Telethroid==0.0.10 
-PyLeaves==1.0.2 
-  
-  
- 
-#---ytdl----# 
-ffmpeg
-youtube_search
-youtube-search-python==1.4.6
-yt-dlp
-youtube-dl
-requests 
-  
-  
-#---others----# 
-opencv-python-headless==4.7.0.68 
+# --- Movies / IMDB ---
+git+https://github.com/Joelkb/cinemagoer 
+
+# --- Tamil / Translation ---
 googletrans==3.1.0a0 
-telegraph==2.2.0 
-python-dotenv==0.21.1 
-gTTS==2.3.1 
-speedtest==0.0.1 
+open-tamil   # ✅ for Tamil text handling
+
+# --- Utils ---
+datetime 
+pytz
+aiofiles
 humanize==4.6.0 
 Pillow==9.4.0 
 psutil==5.9.4 
 NumPy 
 wheel 
-ujson 
-wget 
-pytz
-aiofiles
-dnspython==2.3.0
-### googletrans==4.0.0-rc1 ###
-python-decouple
+colorama
+speedtest==0.0.1 
+
+# --- Media / YTDL ---
+ffmpeg
+youtube_search
+youtube-search-python==1.4.6
+yt-dlp
+youtube-dl
 ffmpeg-python>=0.2.0
 ytthumb
+opencv-python-headless==4.7.0.68 
 
+# --- Telegram / Telegraph ---
+telegraph==2.2.0 
+gTTS==2.3.1 
+
+# --- Web / API ---
+openai==0.25.0
+Flask<=3.0.0
+gunicorn<=21.2.0
+werkzeug==2.0.2
+itsdangerous==2.0.1
 jinja2
 apscheduler
 pyshorteners
 pyromod
-colorama
-openai==0.25.0
-jinja2
-Flask<= 3.0.0
-gunicorn<= 21.2.0
-##https://github.com/pyrogram/pyrogram/archive/master.zip
 
-## reaction
+# --- Optional / Custom ---
+# Telethroid==0.0.10 
+# PyLeaves==1.0.2 
 
-werkzeug==2.0.2
-itsdangerous==2.0.1
+# --- Dev Links ---
 # https://codeload.github.com/KurimuzonAkuma/pyrogram/zip/refs/heads/dev
-sending
