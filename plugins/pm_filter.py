@@ -54,6 +54,21 @@ async def give_filter(client, message):
         await message.react(emoji=random.choice(EMOJIS), big=True)
     except Exception:
         pass
+    # 🔒 Block Links in Groups (skip admins)
+    if re.search(LINK_REGEX, message.text):
+        if not await admin_check(message):
+            try:
+                await message.reply_sticker(
+                    "CAACAgUAAxkBAAEDu3FlYwV7VfGyoXKaThFZcXk3aMcMBgACVQIAAnlc4FfP4cGZpqJ_HDQE"
+                )
+                await message.reply_text("🚫 Don't post links here!")
+            except Exception:
+                pass
+            try:
+                await message.delete()
+            except Exception:
+                pass
+        return
     if message.chat.id != SUPPORT_CHAT_ID:
         manual = await manual_filters(client, message)
         if manual == False:
