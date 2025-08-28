@@ -1,7 +1,8 @@
 # plugins/query_utils.py
 import re
-from googletrans import Translator
+import open_tamil
 from open_tamil import utf8
+from googletrans import Translator
 
 translator = Translator()
 
