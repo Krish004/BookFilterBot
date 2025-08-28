@@ -43,8 +43,9 @@ BUTTONS0 = {}
 BUTTONS1 = {}
 BUTTONS2 = {}
 SPELL_CHECK = {}
-# ENABLE_SHORTLINK = ""
 LINK_REGEX = r"(https?://\S+|t\.me/\S+|@\w+)"
+
+# ENABLE_SHORTLINK = ""
 
 
 @Client.on_message(filters.group & filters.text & filters.incoming)
