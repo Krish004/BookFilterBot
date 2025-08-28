@@ -23,7 +23,7 @@ git+https://github.com/Joelkb/cinemagoer
 
 # --- Tamil / Translation ---
 googletrans==3.1.0a0 
-open-tamil   # ✅ for Tamil text handling
+open-tamil
 
 # --- Utils ---
 datetime 
