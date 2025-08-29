@@ -1,6 +1,5 @@
 # plugins/query_utils.py
 import re
-import open_tamil
 from open_tamil import utf8
 from googletrans import Translator
 
