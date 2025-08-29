@@ -1,6 +1,5 @@
 # plugins/query_utils.py
 import re
-from open_tamil import utf8
 from googletrans import Translator
 
 translator = Translator()
@@ -23,15 +22,11 @@ def clean_book_query(text: str) -> str:
     return query.strip()
 
 def prepare_query(raw: str) -> str:
-    """Clean + transliterate/translate English query into Tamil if needed."""
+    """Clean + translate English query into Tamil if needed."""
     query = clean_book_query(raw)
-    if not is_tamil(query):  # If only English input
+    if not is_tamil(query):  # If no Tamil characters
         try:
-            tamil_words = utf8.get_tamil_words(query)
-            return " ".join(tamil_words)
-        except:
-            try:
-                return translator.translate(query, src='en', dest='ta').text
-            except:
-                return query
+            return translator.translate(query, src='en', dest='ta').text
+        except Exception:
+            return query  # fallback: return as-is
     return query
