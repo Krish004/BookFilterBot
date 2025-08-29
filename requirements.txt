@@ -22,8 +22,7 @@ python-decouple
 git+https://github.com/Joelkb/cinemagoer 
 
 # --- Tamil / Translation ---
-googletrans==3.1.0a0 
-
+deep-translator==1.11.4
 
 # --- Utils ---
 datetime 
@@ -61,8 +60,6 @@ jinja2
 apscheduler
 pyshorteners
 pyromod
-
-open-tamil
 
 # --- Optional / Custom ---
 # Telethroid==0.0.10 
