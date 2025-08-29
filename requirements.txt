@@ -62,7 +62,7 @@ apscheduler
 pyshorteners
 pyromod
 
-open-tamil==0.99.6
+open-tamil
 
 # --- Optional / Custom ---
 # Telethroid==0.0.10 
