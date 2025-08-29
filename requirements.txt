@@ -23,7 +23,7 @@ git+https://github.com/Joelkb/cinemagoer
 
 # --- Tamil / Translation ---
 googletrans==3.1.0a0 
-open-tamil==0.97
+
 
 # --- Utils ---
 datetime 
@@ -62,9 +62,12 @@ apscheduler
 pyshorteners
 pyromod
 
+
 # --- Optional / Custom ---
 # Telethroid==0.0.10 
 # PyLeaves==1.0.2 
 
 # --- Dev Links ---
 # https://codeload.github.com/KurimuzonAkuma/pyrogram/zip/refs/heads/dev
+
+open-tamil
