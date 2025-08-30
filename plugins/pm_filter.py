@@ -1943,27 +1943,45 @@ async def auto_filter(client, msg, spoll=False):
         if re.findall(r"((^\/|^,|^!|^\.|^[\U0001F600-\U000E007F]).*)", message.text):
             return
         if len(message.text) < 100:
-            tamil_q, eng_q = prepare_query(message.text)
-
+          #  tamil_q, eng_q = prepare_query(message.text)
+            tamil_qs, eng_qs = prepare_query(message.text)  # returns lists
             # search Tamil query
-            files1, offset1, total1 = await get_search_results(message.chat.id, tamil_q, offset=0, filter=True)
+            #files1, offset1, total1 = await get_search_results(message.chat.id, tamil_q, offset=0, filter=True)
 
             # search English query
-            files2, offset2, total2 = await get_search_results(message.chat.id, eng_q, offset=0, filter=True)
-
-            # merge results
+            #files2, offset2, total2 = await get_search_results(message.chat.id, eng_q, offset=0, filter=True)
             files_dict = {}
-            for f in (files1 or []):
-                files_dict[f.file_id] = f
-            for f in (files2 or []):
-                files_dict[f.file_id] = f
+            offset = ""
+            total_results = 0
+
+            # Iterate over all queries individually
+            for q in tamil_qs + eng_qs:
+                if not isinstance(q, str) or not q.strip():
+                    continue
+                results, off, total = await get_search_results(message.chat.id, q.strip(), offset=0, filter=True)
+                for f in (results or []):
+                    files_dict[f.file_id] = f
+                if off:
+                    offset = off
+                total_results += total
 
             files = list(files_dict.values())
-            total_results = len(files)
-            offset = offset1 or offset2
             search = message.text
-
             settings = await get_settings(message.chat.id)
+                    
+            # merge results
+       #     files_dict = {}
+      #      for f in (files1 or []):
+       #         files_dict[f.file_id] = f
+       #     for f in (files2 or []):
+        #        files_dict[f.file_id] = f
+
+       #     files = list(files_dict.values())
+       #     total_results = len(files)
+        #    offset = offset1 or offset2
+        #    search = message.text
+
+        #    settings = await get_settings(message.chat.id)
 
             if not files:
                 await msg.delete()
