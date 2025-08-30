@@ -1636,17 +1636,30 @@ async def auto_filter(client, msg, spoll=False):
         if re.findall(r"((^\/|^,|^!|^\.|^[\U0001F600-\U000E007F]).*)", message.text):
             return
         if len(message.text) < 100:
-            search = prepare_query(message.text)   # ✅ cleaned query for books
-            files, offset, total_results = await get_search_results(message.chat.id ,search, offset=0, filter=True)
-            settings = await get_settings(message.chat.id)
+             queries = prepare_query(message.text)   # now returns list
+             all_files, total_results = [], 0
+             offset = ""
 
-            if not files:
-                await msg.delete()
-                if settings["spell_check"]:
-                    return await advantage_spell_chok(client, msg)
-                return
-        else:
-            return
+             for q in queries:
+                  files, off, total = await get_search_results(
+                  message.chat.id, q.lower(), offset=0, filter=True
+              )
+              if files:
+                  all_files.extend(files)
+                  total_results += total
+                  if off:  
+                      offset = off
+
+             settings = await get_settings(message.chat.id)
+
+             if not all_files:
+                  await msg.delete()
+                  if settings["spell_check"]:
+                      return await advantage_spell_chok(client, msg)
+                  return
+              else:
+                   # ✅ remove duplicates by file_id
+                   files = list({f.file_id: f for f in all_files}.values())
     else:
         message = msg.message.reply_to_message
         search, files, offset, total_results = spoll
@@ -1726,7 +1739,8 @@ async def advantage_spell_chok(client, msg):
     reqstr = await client.get_users(reqstr1)
     settings = await get_settings(msg.chat.id)
 
-    query = prepare_query(mv_rqst)
+    query_list = prepare_query(mv_rqst)
+    query = query_list[0] if isinstance(query_list, list) else query_list
 
     g_s = await search_gagala(query)
     g_s += await search_gagala(msg.text)
