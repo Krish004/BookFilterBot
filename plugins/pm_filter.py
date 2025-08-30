@@ -2033,13 +2033,25 @@ async def auto_filter(client, msg, spoll=False):
     else:
         btn.append([InlineKeyboardButton(text="𝐍𝐎 𝐌𝐎𝐑𝐄 𝐏𝐀𝐆𝐄𝐒 𝐀𝐕𝐀𝐈𝐋𝐀𝐁𝐋𝐄", callback_data="pages")])
 
+    # calculate response time
+    cur_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
+    time_difference = timedelta(hours=cur_time.hour, minutes=cur_time.minute, seconds=(cur_time.second+(cur_time.microsecond/1000000))) - timedelta(hours=curr_time.hour, minutes=curr_time.minute, seconds=(curr_time.second+(curr_time.microsecond/1000000)))
+    remaining_seconds = "{:.2f}".format(time_difference.total_seconds())
+    
     # Caption
-    cap = f"<b>📚 {search}</b>\n\n"
-    cap += "<b><u>Available Files 👇</u></b>\n\n"
-    for file in files:
-        cap += f"<b>📁 <a href='https://telegram.me/{temp.U_NAME}?start=files_{file.file_id}'>[{get_size(file.file_size)}] {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@') and not x.startswith('www.'), file.file_name.split()))}</a></b>\n"
+    cap = f"<b>🎪 ᴛɪᴛɪʟᴇ : {search}\n\n┏🤴ᴀsᴋᴇᴅʙʏ: {message.from_user.mention}\n┣⏳ʀᴇsᴜʟᴛ sʜᴏᴡ ɪɴ: {remaining_seconds} sᴇᴄ\n┗🍁 ᴄʜᴀɴɴᴇʟ: @TownBus \n\n<blockquote>⚠️ ᴀꜰᴛᴇʀ 5 ᴍɪɴᴜᴛᴇꜱ ᴛʜɪꜱ ᴍᴇꜱꜱᴀɢᴇ ᴡɪʟʟ ʙᴇ ᴀᴜᴛᴏᴍᴀᴛɪᴄᴀʟʟʏ ᴅᴇʟᴇᴛᴇᴅ 🗑️</blockquote>\n\n⚡ᴘᴏᴡᴇʀᴇᴅ ʙʏ : @eTamilBooks\n</b>"
 
-    fuk = await message.reply_text(text=cap, reply_markup=InlineKeyboardMarkup(btn), disable_web_page_preview=True)
+    if not settings["button"]:
+        cap += "<b><u>\n\n🍿 Your Movie Files 👇</u></b>\n\n"
+        for file in files:
+            cap += f"<b>📁 <a href='https://telegram.me/{temp.U_NAME}?start=files_{file.file_id}'>[{get_size(file.file_size)}] {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@') and not x.startswith('www.'), file.file_name.split()))}</a></b>\n"
+
+    # Send final message
+    fuk = await message.reply_text(
+        text=cap,
+        reply_markup=InlineKeyboardMarkup(btn) if settings["button"] else None,
+        disable_web_page_preview=True
+    )
     if settings.get('auto_delete', False):
         await asyncio.sleep(300)
         await fuk.delete()
