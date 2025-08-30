@@ -1976,33 +1976,21 @@ async def auto_filter(client, msg, spoll=False):
                     offset = off
                 total_results += total
 
-        files = list(files_dict.values())
-        settings = await get_settings(message.chat.id)
-
-        # If still no files, delete and optionally spell-check
-        if not files:
-            await msg.delete()
-            if settings.get("spell_check"):
-                return await advantage_spell_chok(client, msg)
-            return
-
     else:  # spoll mode
         message = msg.message.reply_to_message
-        search, files, offset, total_results = spoll
-        settings = await get_settings(message.chat.id)
-                    
-            if not files:
-                await msg.delete()
-                if settings["spell_check"]:
-                    return await advantage_spell_chok(client, msg)
-                return
-        else:
-            return
-    else:
-        message = msg.message.reply_to_message
-        search, files, offset, total_results = spoll
-        settings = await get_settings(message.chat.id)
+        search, files_dict, offset, total_results = spoll
 
+    files = list(files_dict.values())
+    settings = await get_settings(message.chat.id)
+
+    # Unified "if no files" check for both normal and spoll
+    if not files:
+        if settings.get("spell_check"):
+           return await advantage_spell_chok(client, msg)
+        else:
+            await msg.reply_text("❌ No books found!")
+        return
+        
     pre = 'file'
     key = f"{message.chat.id}-{message.id}"
     FRESH[key] = search
