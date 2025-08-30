@@ -1943,46 +1943,70 @@ async def auto_filter(client, msg, spoll=False):
         if re.findall(r"((^\/|^,|^!|^\.|^[\U0001F600-\U000E007F]).*)", message.text):
             return
         if len(message.text) < 100:
-          #  tamil_q, eng_q = prepare_query(message.text)
-            tamil_qs, eng_qs = prepare_query(message.text)  # returns lists
-            # search Tamil query
-            #files1, offset1, total1 = await get_search_results(message.chat.id, tamil_q, offset=0, filter=True)
 
-            # search English query
-            #files2, offset2, total2 = await get_search_results(message.chat.id, eng_q, offset=0, filter=True)
-            files_dict = {}
-            offset = ""
-            total_results = 0
+import asyncio
+import re
+from datetime import datetime
+import pytz
 
-            # Iterate over all queries individually
-            for q in tamil_qs + eng_qs:
-                if not isinstance(q, str) or not q.strip():
+async def auto_filter(client, msg, spoll=False):
+    curr_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
+
+    if not spoll:
+        message = msg
+        
+        # Ignore commands or emoji messages
+        if message.text.startswith("/") or re.findall(r"((^\/|^,|^!|^\.|^[\U0001F600-\U000E007F]).*)", message.text):
+            return
+        if len(message.text) >= 100:
+            return
+
+        search = message.text.strip()
+        files_dict = {}
+        offset = ""
+        total_results = 0
+
+        # Step 1: Search original query first
+        results, off, total = await get_search_results(message.chat.id, search, offset=0, filter=True)
+        if results:
+            for f in results:
+                files_dict[f.file_id] = f
+            offset = off
+            total_results = total
+        else:
+            # Step 2: Only if no results, prepare Tamil + English queries
+            tamil_qs, eng_qs = prepare_query(search)
+            tasks = [
+                get_search_results(message.chat.id, q.strip(), offset=0, filter=True)
+                for q in tamil_qs + eng_qs if q.strip()
+            ]
+            results_list = await asyncio.gather(*tasks, return_exceptions=True)
+
+            for res in results_list:
+                if isinstance(res, Exception):
                     continue
-                results, off, total = await get_search_results(message.chat.id, q.strip(), offset=0, filter=True)
-                for f in (results or []):
+                r, off, total = res
+                for f in (r or []):
                     files_dict[f.file_id] = f
                 if off:
                     offset = off
                 total_results += total
 
-            files = list(files_dict.values())
-            search = message.text
-            settings = await get_settings(message.chat.id)
+        files = list(files_dict.values())
+        settings = await get_settings(message.chat.id)
+
+        # If still no files, delete and optionally spell-check
+        if not files:
+            await msg.delete()
+            if settings.get("spell_check"):
+                return await advantage_spell_chok(client, msg)
+            return
+
+    else:  # spoll mode
+        message = msg.message.reply_to_message
+        search, files, offset, total_results = spoll
+        settings = await get_settings(message.chat.id)
                     
-            # merge results
-       #     files_dict = {}
-      #      for f in (files1 or []):
-       #         files_dict[f.file_id] = f
-       #     for f in (files2 or []):
-        #        files_dict[f.file_id] = f
-
-       #     files = list(files_dict.values())
-       #     total_results = len(files)
-        #    offset = offset1 or offset2
-        #    search = message.text
-
-        #    settings = await get_settings(message.chat.id)
-
             if not files:
                 await msg.delete()
                 if settings["spell_check"]:
