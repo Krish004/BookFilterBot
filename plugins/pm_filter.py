@@ -2014,18 +2014,112 @@ async def auto_filter(client, msg, spoll=False):
             btn.append(
                 [InlineKeyboardButton("𝐏𝐀𝐆𝐄", callback_data="pages"), 
                  InlineKeyboardButton(text=f"1/{math.ceil(int(total_results)/int(MAX_B_TN))}", callback_data="pages"), 
-                 InlineKeyboardButton(text="𝐍𝐄𝐗𝐓 ➪", callback_data=f"next_{req}_{key}_{offset}")]
-            )
+async def auto_filter(client, msg, spoll=False):
+    curr_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
+    
+    if not spoll:
+        message = msg
+        if message.text.startswith("/"): 
+            return
+        if re.findall(r"((^\/|^,|^!|^\.|^[\U0001F600-\U000E007F]).*)", message.text):
+            return
+        if len(message.text) < 100:
+            tamil_q, eng_q = prepare_query(message.text)
+
+            # search Tamil query
+            files1, offset1, total1 = await get_search_results(message.chat.id, tamil_q, offset=0, filter=True)
+
+            # search English query
+            files2, offset2, total2 = await get_search_results(message.chat.id, eng_q, offset=0, filter=True)
+
+            # merge results
+            files_dict = {}
+            for f in (files1 or []):
+                files_dict[f.file_id] = f
+            for f in (files2 or []):
+                files_dict[f.file_id] = f
+
+            files = list(files_dict.values())
+            total_results = len(files)
+            offset = offset1 or offset2
+            search = message.text
+
+            settings = await get_settings(message.chat.id)
+
+            if not files:
+                await msg.delete()
+                if settings["spell_check"]:
+                    return await advantage_spell_chok(client, msg)
+                return
+        else:
+            return
+    else:
+        message = msg.message.reply_to_message
+        search, files, offset, total_results = spoll
+        settings = await get_settings(message.chat.id)
+
+    pre = 'file'
+    key = f"{message.chat.id}-{message.id}"
+    FRESH[key] = search
+    temp.GETALL[key] = files
+    temp.SHORT[message.from_user.id] = message.chat.id
+
+    # Buttons
+    if settings["button"]:
+        btn = [
+            [
+                InlineKeyboardButton(
+                    text=f"[{get_size(file.file_size)}] {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@') and not x.startswith('www.'), file.file_name.split()))}", 
+                    callback_data=f'{pre}#{file.file_id}'
+                ),
+            ]
+            for file in files
+        ]
+        btn.insert(0, [
+            InlineKeyboardButton(f'Sᴇʟᴇᴄᴛ ➢', 'select'),
+            InlineKeyboardButton("ʟᴀɴɢᴜᴀɢᴇs", callback_data=f"languages#{key}"),
+            InlineKeyboardButton("Sᴇᴀsᴏɴs", callback_data=f"seasons#{key}")
+        ])
+        btn.insert(0, [
+            InlineKeyboardButton("Sᴛᴀʀᴛ Bᴏᴛ", url=f"https://telegram.me/{temp.U_NAME}"),
+            InlineKeyboardButton("𝐒𝐞𝐧𝐝 𝐀𝐥𝐥", callback_data=f"sendfiles#{key}")
+        ])
+    else:
+        btn = []
+        btn.insert(0, [
+            InlineKeyboardButton(f'Sᴇʟᴇᴄᴛ ➢', 'select'),
+            InlineKeyboardButton("ʟᴀɴɢᴜᴀɢᴇs", callback_data=f"languages#{key}"),
+            InlineKeyboardButton("Sᴇᴀsᴏɴs", callback_data=f"seasons#{key}")
+        ])
+        btn.insert(0, [
+            InlineKeyboardButton("Sᴛᴀʀᴛ Bᴏᴛ", url=f"https://telegram.me/{temp.U_NAME}"),
+            InlineKeyboardButton("𝐒𝐞𝐧𝐝 𝐀𝐥𝐥", callback_data=f"sendfiles#{key}")
+        ])
+
+    # Pagination
+    if offset != "":
+        req = message.from_user.id if message.from_user else 0
+        if settings.get('max_btn', True):
+            btn.append([
+                InlineKeyboardButton("𝐏𝐀𝐆𝐄", callback_data="pages"), 
+                InlineKeyboardButton(text=f"1/{math.ceil(int(total_results)/10)}", callback_data="pages"), 
+                InlineKeyboardButton(text="𝐍𝐄𝐗𝐓 ➪", callback_data=f"next_{req}_{key}_{offset}")
+            ])
+        else:
+            btn.append([
+                InlineKeyboardButton("𝐏𝐀𝐆𝐄", callback_data="pages"), 
+                InlineKeyboardButton(text=f"1/{math.ceil(int(total_results)/int(MAX_B_TN))}", callback_data="pages"), 
+                InlineKeyboardButton(text="𝐍𝐄𝐗𝐓 ➪", callback_data=f"next_{req}_{key}_{offset}")
+            ])
     else:
         btn.append([InlineKeyboardButton(text="𝐍𝐎 𝐌𝐎𝐑𝐄 𝐏𝐀𝐆𝐄𝐒 𝐀𝐕𝐀𝐈𝐋𝐀𝐁𝐋𝐄", callback_data="pages")])
 
-    # ✅ Caption (books)
+    # Caption
     cap = f"<b>📚 {search}</b>\n\n"
     cap += "<b><u>Available Files 👇</u></b>\n\n"
     for file in files:
         cap += f"<b>📁 <a href='https://telegram.me/{temp.U_NAME}?start=files_{file.file_id}'>[{get_size(file.file_size)}] {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@') and not x.startswith('www.'), file.file_name.split()))}</a></b>\n"
 
-    # ✅ Final send
     fuk = await message.reply_text(text=cap, reply_markup=InlineKeyboardMarkup(btn), disable_web_page_preview=True)
     if settings.get('auto_delete', False):
         await asyncio.sleep(300)
@@ -2039,10 +2133,18 @@ async def advantage_spell_chok(client, msg):
     reqstr = await client.get_users(reqstr1)
     settings = await get_settings(msg.chat.id)
 
-    query = prepare_query(mv_rqst)
+#    query = prepare_query(mv_rqst)
+    tamil_q, eng_q = prepare_query(mv_rqst)
 
-    g_s = await search_gagala(query)
-    g_s += await search_gagala(msg.text)
+    # Tamil + English இரண்டையும் search பண்ணுறது
+    g_s = await search_gagala(tamil_q)
+    g_s += await search_gagala(eng_q)
+
+    # raw user text கூட சேர்த்துக்கோ
+    g_s += await search_gagala(mv_rqst)
+
+#    g_s = await search_gagala(query)
+#    g_s += await search_gagala(msg.text)
 
     if not g_s:
         reqst_gle = query.replace(" ", "+")
