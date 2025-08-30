@@ -21,12 +21,25 @@ def clean_book_query(text: str) -> str:
     query = re.sub(r"\s+", " ", query).strip(" -_.,")
     return query.strip()
 
-def prepare_query(raw: str) -> str:
-    """Clean + translate English query into Tamil if needed."""
+def prepare_query(raw: str):
+    """Return both Tamil + English versions of query."""
     query = clean_book_query(raw)
-    if not is_tamil(query):  # If no Tamil characters
+
+    tamil_q = query
+    eng_q = query
+
+    # If text is English, try Tamil translate
+    if not is_tamil(query):
         try:
-            return translator.translate(query, src='en', dest='ta').text
+            tamil_q = translator.translate(query, src='en', dest='ta').text
         except Exception:
-            return query  # fallback: return as-is
-    return query
+            tamil_q = query  # fallback
+
+    # If text is Tamil, try English translate (for English books)
+    else:
+        try:
+            eng_q = translator.translate(query, src='ta', dest='en').text
+        except Exception:
+            eng_q = query  # fallback
+
+    return tamil_q, eng_q
