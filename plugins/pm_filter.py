@@ -1935,27 +1935,29 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
 async def auto_filter(client, msg, spoll=False):
     curr_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
+    message = msg if not spoll else msg.message.reply_to_message
 
+    # Ignore commands or emoji messages
     if not spoll:
-        message = msg
-        
-        # Ignore commands or emoji messages
         if message.text.startswith("/") or re.findall(r"((^\/|^,|^!|^\.|^[\U0001F600-\U000E007F]).*)", message.text):
             return
-            
-        search = message.text.strip()
-        if len(message.text) >= 100:
-            btn = [[
-                    InlineKeyboardButton(f"Searching  🔍  for {search}", url=CHNL_LNK)
-                    ]]
-            t = await message.reply_sticker('CAACAgEAAxkBAAELsPll8t5cvdA0V5gLXO8f0u-j3LPe5wACGgIAAgnI4EWYH_K8RgwSezQE', reply_markup=InlineKeyboardMarkup(btn))
-            await asyncio.sleep(5)
-            await t.delete()
-        files_dict = {}
-        offset = ""
-        total_results = 0
 
-        # Step 1: Search original query first
+    search = message.text.strip() if not spoll else spoll[0]
+
+    # If long query, show "Searching 🔍" sticker immediately (async, doesn't block)
+    if not spoll and len(search) >= 100:
+        btn = [[InlineKeyboardButton(f"Searching 🔍 for {search}", url=CHNL_LNK)]]
+        asyncio.create_task(message.reply_sticker(
+            'CAACAgEAAxkBAAELsPll8t5cvdA0V5gLXO8f0u-j3LPe5wACGgIAAgnI4EWYH_K8RgwSezQE', 
+            reply_markup=InlineKeyboardMarkup(btn)
+        ))
+
+    files_dict = {}
+    offset = ""
+    total_results = 0
+
+    if not spoll:
+        # Step 1: Search original query
         results, off, total = await get_search_results(message.chat.id, search, offset=0, filter=True)
         if results:
             for f in results:
@@ -1963,14 +1965,11 @@ async def auto_filter(client, msg, spoll=False):
             offset = off
             total_results = total
         else:
-            # Step 2: Only if no results, prepare Tamil + English queries
+            # Step 2: If no results, prepare Tamil + English queries
             tamil_qs, eng_qs = prepare_query(search)
-            tasks = [
-                get_search_results(message.chat.id, q.strip(), offset=0, filter=True)
-                for q in tamil_qs + eng_qs if q.strip()
-            ]
+            tasks = [get_search_results(message.chat.id, q.strip(), offset=0, filter=True)
+                     for q in tamil_qs + eng_qs if q.strip()]
             results_list = await asyncio.gather(*tasks, return_exceptions=True)
-
             for res in results_list:
                 if isinstance(res, Exception):
                     continue
@@ -1980,22 +1979,21 @@ async def auto_filter(client, msg, spoll=False):
                 if off:
                     offset = off
                 total_results += total
-
     else:  # spoll mode
-        message = msg.message.reply_to_message
-        search, files_dict, offset, total_results = spoll
+        _, files_dict, offset, total_results = spoll
 
     files = list(files_dict.values())
     settings = await get_settings(message.chat.id)
 
-    # Unified "if no files" check for both normal and spoll
+    # If no files found
     if not files:
         if settings.get("spell_check"):
-           return await advantage_spell_chok(client, msg)
+            return await advantage_spell_chok(client, msg)
         else:
             await msg.reply_text("❌ No books found!")
         return
-        
+
+    # Prepare keys & temp storage
     pre = 'file'
     key = f"{message.chat.id}-{message.id}"
     FRESH[key] = search
@@ -2003,6 +2001,7 @@ async def auto_filter(client, msg, spoll=False):
     temp.SHORT[message.from_user.id] = message.chat.id
 
     # Buttons
+    btn = []
     if settings["button"]:
         btn = [
             [
@@ -2022,48 +2021,21 @@ async def auto_filter(client, msg, spoll=False):
             InlineKeyboardButton("Sᴛᴀʀᴛ Bᴏᴛ", url=f"https://telegram.me/{temp.U_NAME}"),
             InlineKeyboardButton("𝐒𝐞𝐧𝐝 𝐀𝐥𝐥", callback_data=f"sendfiles#{key}")
         ])
-    else:
-        btn = []
-        btn.insert(0, [
-            InlineKeyboardButton(f'Sᴇʟᴇᴄᴛ ➢', 'select'),
-            InlineKeyboardButton("ʟᴀɴɢᴜᴀɢᴇs", callback_data=f"languages#{key}"),
-            InlineKeyboardButton("Sᴇᴀsᴏɴs", callback_data=f"seasons#{key}")
-        ])
-        btn.insert(0, [
-            InlineKeyboardButton("Sᴛᴀʀᴛ Bᴏᴛ", url=f"https://telegram.me/{temp.U_NAME}"),
-            InlineKeyboardButton("𝐒𝐞𝐧𝐝 𝐀𝐥𝐥", callback_data=f"sendfiles#{key}")
-        ])
 
     # Pagination
     if offset != "":
         req = message.from_user.id if message.from_user else 0
-        if settings.get('max_btn', True):
-            btn.append([
-                InlineKeyboardButton("𝐏𝐀𝐆𝐄", callback_data="pages"), 
-                InlineKeyboardButton(text=f"1/{math.ceil(int(total_results)/10)}", callback_data="pages"), 
-                InlineKeyboardButton(text="𝐍𝐄𝐗𝐓 ➪", callback_data=f"next_{req}_{key}_{offset}")
-            ])
-        else:
-            btn.append([
-                InlineKeyboardButton("𝐏𝐀𝐆𝐄", callback_data="pages"), 
-                InlineKeyboardButton(text=f"1/{math.ceil(int(total_results)/int(MAX_B_TN))}", callback_data="pages"), 
-                InlineKeyboardButton(text="𝐍𝐄𝐗𝐓 ➪", callback_data=f"next_{req}_{key}_{offset}")
-            ])
+        pages_total = math.ceil(int(total_results)/10) if settings.get('max_btn', True) else math.ceil(int(total_results)/int(MAX_B_TN))
+        btn.append([
+            InlineKeyboardButton("𝐏𝐀𝐆𝐄", callback_data="pages"), 
+            InlineKeyboardButton(text=f"1/{pages_total}", callback_data="pages"), 
+            InlineKeyboardButton(text="𝐍𝐄𝐗𝐓 ➪", callback_data=f"next_{req}_{key}_{offset}")
+        ])
     else:
         btn.append([InlineKeyboardButton(text="𝐍𝐎 𝐌𝐎𝐑𝐄 𝐏𝐀𝐆𝐄𝐒 𝐀𝐕𝐀𝐈𝐋𝐀𝐁𝐋𝐄", callback_data="pages")])
 
-    # calculate response time
-    cur_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
-    time_difference = timedelta(hours=cur_time.hour, minutes=cur_time.minute, seconds=(cur_time.second+(cur_time.microsecond/1000000))) - timedelta(hours=curr_time.hour, minutes=curr_time.minute, seconds=(curr_time.second+(curr_time.microsecond/1000000)))
-    remaining_seconds = "{:.2f}".format(time_difference.total_seconds())
-    
     # Caption
-    cap = f"<b>🎪 ᴛɪᴛɪʟᴇ : {search}\n\n┏🤴ᴀsᴋᴇᴅʙʏ: {message.from_user.mention}\n┣⏳ʀᴇsᴜʟᴛ sʜᴏᴡ ɪɴ: {remaining_seconds} sᴇᴄ\n┗🍁 ᴄʜᴀɴɴᴇʟ: @TownBus \n\n<blockquote>⚠️ ᴀꜰᴛᴇʀ 5 ᴍɪɴᴜᴛᴇꜱ ᴛʜɪꜱ ᴍᴇꜱꜱᴀɢᴇ ᴡɪʟʟ ʙᴇ ᴀᴜᴛᴏᴍᴀᴛɪᴄᴀʟʟʏ ᴅᴇʟᴇᴛᴇᴅ 🗑️</blockquote>\n\n⚡ᴘᴏᴡᴇʀᴇᴅ ʙʏ : @eTamilBooks\n</b>"
-
-    if not settings["button"]:
-        cap += "<b><u>\n\n🍿 Your Movie Files 👇</u></b>\n\n"
-        for file in files:
-            cap += f"<b>📁 <a href='https://telegram.me/{temp.U_NAME}?start=files_{file.file_id}'>[{get_size(file.file_size)}] {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@') and not x.startswith('www.'), file.file_name.split()))}</a></b>\n"
+    cap = f"<b>🎪 ᴛɪᴛʟᴇ : {search}\n\n┏🤴ᴀsᴋᴇᴅʙʏ: {message.from_user.mention}\n┗🍁 ᴄʜᴀɴɴᴇʟ: @TownBus\n\n⚡ᴘᴏᴡᴇʀᴇᴅ ʙʏ : @eTamilBooks</b>"
 
     # Send final message
     fuk = await message.reply_text(
@@ -2071,10 +2043,11 @@ async def auto_filter(client, msg, spoll=False):
         reply_markup=InlineKeyboardMarkup(btn) if settings["button"] else None,
         disable_web_page_preview=True
     )
+
+    # Auto-delete bot message only
     if settings.get('auto_delete', False):
         await asyncio.sleep(300)
         await fuk.delete()
-        await message.delete()
 
 
 async def advantage_spell_chok(client, msg):
