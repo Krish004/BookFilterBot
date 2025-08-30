@@ -1932,22 +1932,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
             await query.message.edit_reply_markup(reply_markup)
     await query.answer(MSG_ALRT)
 
-    
-async def auto_filter(client, msg, spoll=False):
-    curr_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
-    
-    if not spoll:
-        message = msg
-        if message.text.startswith("/"): 
-            return
-        if re.findall(r"((^\/|^,|^!|^\.|^[\U0001F600-\U000E007F]).*)", message.text):
-            return
-        if len(message.text) < 100:
-
-import asyncio
-import re
-from datetime import datetime
-import pytz
 
 async def auto_filter(client, msg, spoll=False):
     curr_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
