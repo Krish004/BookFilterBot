@@ -1942,15 +1942,15 @@ async def auto_filter(client, msg, spoll=False):
         # Ignore commands or emoji messages
         if message.text.startswith("/") or re.findall(r"((^\/|^,|^!|^\.|^[\U0001F600-\U000E007F]).*)", message.text):
             return
-        if len(message.text) >= 100:
-        search = message.text
-        btn = [[
-                InlineKeyboardButton(f"Searching  🔍  for {search}", url=CHNL_LNK)
-                ]]
-        t = await message.reply_sticker('CAACAgEAAxkBAAELsPll8t5cvdA0V5gLXO8f0u-j3LPe5wACGgIAAgnI4EWYH_K8RgwSezQE', reply_markup=InlineKeyboardMarkup(btn))
-        await asyncio.sleep(5)
-        await t.delete()
+            
         search = message.text.strip()
+        if len(message.text) >= 100:
+            btn = [[
+                    InlineKeyboardButton(f"Searching  🔍  for {search}", url=CHNL_LNK)
+                    ]]
+            t = await message.reply_sticker('CAACAgEAAxkBAAELsPll8t5cvdA0V5gLXO8f0u-j3LPe5wACGgIAAgnI4EWYH_K8RgwSezQE', reply_markup=InlineKeyboardMarkup(btn))
+            await asyncio.sleep(5)
+            await t.delete()
         files_dict = {}
         offset = ""
         total_results = 0
