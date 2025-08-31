@@ -1945,7 +1945,7 @@ async def auto_filter(client, msg, spoll=False):
     search = message.text.strip() if not spoll else spoll[0]
 
     # If long query, show "Searching 🔍" sticker immediately (async, doesn't block)
-    if not spoll and len(search) >= 100:
+    if not spoll and len(search) < 100:
         btn = [[InlineKeyboardButton(f"Searching 🔍 for {search}", url=CHNL_LNK)]]
         asyncio.create_task(message.reply_sticker(
             'CAACAgEAAxkBAAELsPll8t5cvdA0V5gLXO8f0u-j3LPe5wACGgIAAgnI4EWYH_K8RgwSezQE', 
