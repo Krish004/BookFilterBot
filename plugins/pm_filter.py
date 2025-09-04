@@ -1849,6 +1849,40 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 reply_markup=reply_markup,
                 parse_mode=enums.ParseMode.HTML
             )
+    elif query.data.startswith("spolling#"):
+        try:
+            _, user_id, index = query.data.split("#")
+            user_id = int(user_id)
+            index = int(index)
+
+            if query.from_user.id != user_id:
+                return await query.answer("This suggestion is not for you!", show_alert=True)
+
+            booklist = SPELL_CHECK.get(query.message.reply_to_message.id)
+            if not booklist or index >= len(booklist):
+                return await query.answer("Suggestion expired!", show_alert=True)
+
+            new_query = booklist[index]
+
+            await query.message.edit_caption(f"🔍 You selected: <b>{new_query}</b>")
+            await auto_filter(client, query.message.reply_to_message, spoll=[new_query])
+
+        except Exception as e:
+            print(f"spellcheck_callback error: {e}")
+            await query.answer("Something went wrong!", show_alert=True)
+
+    elif query.data.startswith("spol#"):
+        try:
+            _, user_id, action = query.data.split("#")
+            user_id = int(user_id)
+
+            if query.from_user.id != user_id:
+                return await query.answer("Not for you!", show_alert=True)
+
+            if action == "close_spellcheck":
+                await query.message.delete()
+        except Exception as e:
+            print(f"close_spellcheck error: {e}")
 
     elif query.data.startswith("setgs"):
         ident, set_type, status, grp_id = query.data.split("#")
@@ -1933,6 +1967,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
     await query.answer(MSG_ALRT)
 
 
+# ---------------- Auto Filter ---------------- #
 async def auto_filter(client, msg, spoll=False):
     curr_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
     message = msg if not spoll else msg.message.reply_to_message
@@ -1946,7 +1981,7 @@ async def auto_filter(client, msg, spoll=False):
 
     search = message.text.strip() if not spoll else spoll[0]
 
-    # If query length < 200, show searching sticker (auto delete after 5s)
+    # Sticker reply (<200 chars only)
     if not spoll and len(search) < 200:
         btn = [[InlineKeyboardButton(f"Searching 🔍 for {search}", url=CHNL_LNK)]]
         try:
@@ -1964,20 +1999,29 @@ async def auto_filter(client, msg, spoll=False):
     total_results = 0
 
     if not spoll:
-        # Step 1: Search only DB (fast)
-        results, off, total = await get_search_results(message.chat.id, search, offset=0, filter=True)
-        if results:
-            for f in results:
-                files_dict[f.file_id] = f
-            offset = off
+        # Hybrid DB search
+        files, total = await get_bad_files(search)
+        if total and total <= int(MAX_B_TN):
+            results = files
+            offset = ""
             total_results = total
-    else:  # spoll mode
+        else:
+            results, off, total = await get_search_results(message.chat.id, search, offset=0, filter=True)
+            if results:
+                offset = off
+                total_results = total
+            else:
+                return await advantage_spell_chok(client, msg)
+
+        for f in results:
+            files_dict[f.file_id] = f
+    else:
         _, files_dict, offset, total_results = spoll
 
     files = list(files_dict.values())
     settings = await get_settings(message.chat.id)
 
-    # If no files found, go for advanced spell check / translation
+    # No files found
     if not files:
         if settings.get("spell_check"):
             return await advantage_spell_chok(client, msg)
@@ -1985,7 +2029,7 @@ async def auto_filter(client, msg, spoll=False):
             await msg.reply_text("❌ No books found!")
         return
 
-    # Prepare keys & temp storage
+    # Prepare keys
     pre = 'file'
     key = f"{message.chat.id}-{message.id}"
     FRESH[key] = search
@@ -1998,7 +2042,7 @@ async def auto_filter(client, msg, spoll=False):
         btn = [
             [
                 InlineKeyboardButton(
-                    text=f"[{get_size(file.file_size)}] {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@') and not x.startswith('www.'), file.file_name.split()))}", 
+                    text=f"[{get_size(file.file_size)}] {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@') and not x.startswith('www.'), file.file_name.split()))}",
                     callback_data=f'{pre}#{file.file_id}'
                 ),
             ]
@@ -2019,14 +2063,14 @@ async def auto_filter(client, msg, spoll=False):
         req = message.from_user.id if message.from_user else 0
         pages_total = math.ceil(int(total_results)/10) if settings.get('max_btn', True) else math.ceil(int(total_results)/int(MAX_B_TN))
         btn.append([
-            InlineKeyboardButton("𝐏𝐀𝐆𝐄", callback_data="pages"), 
-            InlineKeyboardButton(text=f"1/{pages_total}", callback_data="pages"), 
+            InlineKeyboardButton("𝐏𝐀𝐆𝐄", callback_data="pages"),
+            InlineKeyboardButton(text=f"1/{pages_total}", callback_data="pages"),
             InlineKeyboardButton(text="𝐍𝐄𝐗𝐓 ➪", callback_data=f"next_{req}_{key}_{offset}")
         ])
     else:
         btn.append([InlineKeyboardButton(text="𝐍𝐎 𝐌𝐎𝐑𝐄 𝐏𝐀𝐆𝐄𝐒 𝐀𝐕𝐀𝐈𝐋𝐀𝐁𝐋𝐄", callback_data="pages")])
 
-    # calculate response time
+    # Response time
     cur_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
     time_difference = timedelta(
         hours=cur_time.hour, minutes=cur_time.minute, seconds=cur_time.second+(cur_time.microsecond/1000000)
@@ -2034,43 +2078,50 @@ async def auto_filter(client, msg, spoll=False):
         hours=curr_time.hour, minutes=curr_time.minute, seconds=curr_time.second+(curr_time.microsecond/1000000)
     )
     remaining_seconds = "{:.2f}".format(time_difference.total_seconds())
-    
-    # Caption
-    cap = f"<b>🎪 ᴛɪᴛɪʟᴇ : {search}\n\n┏🤴ᴀsᴋᴇᴅʙʏ: {message.from_user.mention}\n┣⏳ʀᴇsᴜʟᴛ sʜᴏᴡ ɪɴ: {remaining_seconds} sᴇᴄ\n┗🍁 ᴄʜᴀɴɴᴇʟ: @TownBus \n\n<blockquote>⚠️ ᴀꜰᴛᴇʀ 5 ᴍɪɴᴜᴛᴇꜱ ᴛʜɪꜱ ᴍᴇꜱꜱᴀɢᴇ ᴡɪʟʟ ʙᴇ ᴀᴜᴛᴏᴍᴀᴛɪᴄᴀʟʟʏ ᴅᴇʟᴇᴛᴇᴅ 🗑️</blockquote>\n\n⚡ᴘᴏᴡᴇʀᴇᴅ ʙʏ : @eTamilBooks\n</b>"
 
-    # Send final message
+    # Caption
+    cap = f"<b>🎪 ᴛɪᴛɪʟᴇ : {search}\n\n┏🤴ᴀsᴋᴇᴅʙʏ: {message.from_user.mention}\n┣⏳ʀᴇsᴜʟᴛ sʜᴏᴡ ɪɴ: {remaining_seconds} sᴇᴄ\n┗🍁 ᴄʜᴀɴɴᴇʟ: @TownBus \n\n<blockquote>⚠️ ᴀꜰᴛᴇʀ 5 ᴍɪɴᴜᴛᴇꜱ ᴛʜɪꜱ ᴍᴇssᴀɢᴇ ᴡɪʟʟ ʙᴇ ᴀᴜᴛᴏᴍᴀᴛɪᴄᴀʟʟʏ ᴅᴇʟᴇᴛᴇᴅ 🗑️</blockquote>\n\n⚡ᴘᴏᴡᴇʀᴇᴅ ʙʏ : @eTamilBooks\n</b>"
+
     fuk = await message.reply_text(
         text=cap,
         reply_markup=InlineKeyboardMarkup(btn) if settings["button"] else None,
         disable_web_page_preview=True
     )
 
-    # Auto-delete bot message only
     if settings.get('auto_delete', False):
         await asyncio.sleep(300)
         await fuk.delete()
 
 
+# ---------------- Spell Check ---------------- #
 async def advantage_spell_chok(client, msg):
     mv_rqst = msg.text.strip()
     reqstr1 = msg.from_user.id if msg.from_user else 0
     reqstr = await client.get_users(reqstr1)
     settings = await get_settings(msg.chat.id)
 
-    # Tamil + English queries prepare
-    tamil_q, eng_q = prepare_query(mv_rqst)
+    tamil_qs, eng_qs = prepare_query(mv_rqst)
 
-    # Google-style advanced search (Tamil + English + Raw text)
-    g_s = []
+    tasks = []
+    if tamil_qs:
+        tasks.extend([search_gagala(q) for q in tamil_qs])
+    if eng_qs:
+        tasks.extend([search_gagala(q) for q in eng_qs])
+    tasks.append(search_gagala(mv_rqst))
+
     try:
-        g_s += await search_gagala(tamil_q)
-        g_s += await search_gagala(eng_q)
-        g_s += await search_gagala(mv_rqst)
+        results = await asyncio.gather(*tasks, return_exceptions=True)
     except Exception as e:
-        print(f"Error in search_gagala: {e}")
+        print(f"search_gagala failed: {e}")
+        results = []
+
+    g_s = []
+    for r in results:
+        if isinstance(r, Exception) or not r:
+            continue
+        g_s.extend(r)
 
     if not g_s:
-        # No results anywhere → fallback to Google button
         reqst_gle = mv_rqst.replace(" ", "+")
         button = [[InlineKeyboardButton("🔎 Gᴏᴏɢʟᴇ", url=f"https://www.google.com/search?q={reqst_gle}")]]
         if NO_RESULTS_MSG:
@@ -2083,65 +2134,47 @@ async def advantage_spell_chok(client, msg):
             caption=script.I_CUDNT.format(mv_rqst),
             reply_markup=InlineKeyboardMarkup(button)
         )
-        await asyncio.sleep(30)
+        await asyncio.sleep(15)
         await k.delete()
         return
 
-    # Clean results
-    gs_parsed = [
-        re.sub(r'(\(|\)|\-|reviews|full|all)', '', i, flags=re.IGNORECASE)
+    booklist = [
+        re.sub(r'(\-|\(|\)|_|reviews|full|all)', '', i, flags=re.IGNORECASE).strip()
         for i in g_s
     ]
-    booklist = [
-        re.sub(r'(\-|\(|\)|_)', '', i, flags=re.IGNORECASE).strip()
-        for i in gs_parsed
-    ]
-    booklist = list(dict.fromkeys(booklist))  # remove duplicates
+    booklist = list(dict.fromkeys(booklist))[:10]
 
     if not booklist:
-        # Still nothing after cleanup → fallback again
         reqst_gle = mv_rqst.replace(" ", "+")
         button = [[InlineKeyboardButton("🔎 Gᴏᴏɢʟᴇ", url=f"https://www.google.com/search?q={reqst_gle}")]]
-        if NO_RESULTS_MSG:
-            await client.send_message(
-                chat_id=LOG_CHANNEL,
-                text=script.NORSLTS.format(reqstr.id, reqstr.mention, mv_rqst)
-            )
         k = await msg.reply_photo(
             photo=SPELL_IMG,
             caption=script.I_CUDNT.format(mv_rqst),
             reply_markup=InlineKeyboardMarkup(button)
         )
-        await asyncio.sleep(30)
+        await asyncio.sleep(15)
         await k.delete()
         return
 
-    # Save for callback handling
     SPELL_CHECK[msg.id] = booklist
 
-    # Create buttons
     btn = [[
         InlineKeyboardButton(
-            text=book.strip(),
+            text=book,
             callback_data=f"spolling#{reqstr1}#{k}",
         )
     ] for k, book in enumerate(booklist)]
-    btn.append([InlineKeyboardButton("❌ Close", callback_data=f"spol#{reqstr1}#close_spellcheck")])
+    btn.append([InlineKeyboardButton("❌ Close", callback_data=f'spol#{reqstr1}#close_spellcheck')])
 
-    # Send spell-check suggestion message
     spell_check_del = await msg.reply_photo(
         photo=SPELL_IMG,
         caption=script.CUDNT_FND.format(mv_rqst),
         reply_markup=InlineKeyboardMarkup(btn)
     )
 
-    # Auto-delete after 60s if enabled
-    try:
-        if settings.get('auto_delete', False):
-            await asyncio.sleep(60)
-            await spell_check_del.delete()
-    except Exception as e:
-        print(f"Auto-delete failed: {e}")
+    if settings.get('auto_delete', False):
+        await asyncio.sleep(60)
+        await spell_check_del.delete()
 
 async def manual_filters(client, message, text=False):
     settings = await get_settings(message.chat.id)
