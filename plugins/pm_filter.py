@@ -1939,53 +1939,45 @@ async def auto_filter(client, msg, spoll=False):
 
     # Ignore commands or emoji messages
     if not spoll:
-        if message.text.startswith("/") or re.findall(r"((^\/|^,|^!|^\.|^[\U0001F600-\U000E007F]).*)", message.text):
+        if not message.text:
+            return
+        if message.text.startswith("/") or re.match(r"^[\/,!.]", message.text) or re.match(r"^[\U0001F600-\U000E007F]", message.text):
             return
 
     search = message.text.strip() if not spoll else spoll[0]
 
-    # If long query, show "Searching 🔍" sticker immediately (async, doesn't block)
-    if not spoll and len(search) < 100:
+    # If query length < 200, show searching sticker (auto delete after 5s)
+    if not spoll and len(search) < 200:
         btn = [[InlineKeyboardButton(f"Searching 🔍 for {search}", url=CHNL_LNK)]]
-        asyncio.create_task(message.reply_sticker(
-            'CAACAgEAAxkBAAELsPll8t5cvdA0V5gLXO8f0u-j3LPe5wACGgIAAgnI4EWYH_K8RgwSezQE', 
-            reply_markup=InlineKeyboardMarkup(btn)
-        ))
+        try:
+            t = await message.reply_sticker(
+                'CAACAgEAAxkBAAELsPll8t5cvdA0V5gLXO8f0u-j3LPe5wACGgIAAgnI4EWYH_K8RgwSezQE',
+                reply_markup=InlineKeyboardMarkup(btn)
+            )
+            await asyncio.sleep(5)
+            await t.delete()
+        except Exception as e:
+            print(f"Sticker reply failed: {e}")
 
     files_dict = {}
     offset = ""
     total_results = 0
 
     if not spoll:
-        # Step 1: Search original query
+        # Step 1: Search only DB (fast)
         results, off, total = await get_search_results(message.chat.id, search, offset=0, filter=True)
         if results:
             for f in results:
                 files_dict[f.file_id] = f
             offset = off
             total_results = total
-        else:
-            # Step 2: If no results, prepare Tamil + English queries
-            tamil_qs, eng_qs = prepare_query(search)
-            tasks = [get_search_results(message.chat.id, q.strip(), offset=0, filter=True)
-                     for q in tamil_qs + eng_qs if q.strip()]
-            results_list = await asyncio.gather(*tasks, return_exceptions=True)
-            for res in results_list:
-                if isinstance(res, Exception):
-                    continue
-                r, off, total = res
-                for f in (r or []):
-                    files_dict[f.file_id] = f
-                if off:
-                    offset = off
-                total_results += total
     else:  # spoll mode
         _, files_dict, offset, total_results = spoll
 
     files = list(files_dict.values())
     settings = await get_settings(message.chat.id)
 
-    # If no files found
+    # If no files found, go for advanced spell check / translation
     if not files:
         if settings.get("spell_check"):
             return await advantage_spell_chok(client, msg)
@@ -2034,8 +2026,17 @@ async def auto_filter(client, msg, spoll=False):
     else:
         btn.append([InlineKeyboardButton(text="𝐍𝐎 𝐌𝐎𝐑𝐄 𝐏𝐀𝐆𝐄𝐒 𝐀𝐕𝐀𝐈𝐋𝐀𝐁𝐋𝐄", callback_data="pages")])
 
+    # calculate response time
+    cur_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
+    time_difference = timedelta(
+        hours=cur_time.hour, minutes=cur_time.minute, seconds=cur_time.second+(cur_time.microsecond/1000000)
+    ) - timedelta(
+        hours=curr_time.hour, minutes=curr_time.minute, seconds=curr_time.second+(curr_time.microsecond/1000000)
+    )
+    remaining_seconds = "{:.2f}".format(time_difference.total_seconds())
+    
     # Caption
-    cap = f"<b>🎪 ᴛɪᴛʟᴇ : {search}\n\n┏🤴ᴀsᴋᴇᴅʙʏ: {message.from_user.mention}\n┗🍁 ᴄʜᴀɴɴᴇʟ: @TownBus\n\n⚡ᴘᴏᴡᴇʀᴇᴅ ʙʏ : @eTamilBooks</b>"
+    cap = f"<b>🎪 ᴛɪᴛɪʟᴇ : {search}\n\n┏🤴ᴀsᴋᴇᴅʙʏ: {message.from_user.mention}\n┣⏳ʀᴇsᴜʟᴛ sʜᴏᴡ ɪɴ: {remaining_seconds} sᴇᴄ\n┗🍁 ᴄʜᴀɴɴᴇʟ: @TownBus \n\n<blockquote>⚠️ ᴀꜰᴛᴇʀ 5 ᴍɪɴᴜᴛᴇꜱ ᴛʜɪꜱ ᴍᴇꜱꜱᴀɢᴇ ᴡɪʟʟ ʙᴇ ᴀᴜᴛᴏᴍᴀᴛɪᴄᴀʟʟʏ ᴅᴇʟᴇᴛᴇᴅ 🗑️</blockquote>\n\n⚡ᴘᴏᴡᴇʀᴇᴅ ʙʏ : @eTamilBooks\n</b>"
 
     # Send final message
     fuk = await message.reply_text(
@@ -2051,31 +2052,34 @@ async def auto_filter(client, msg, spoll=False):
 
 
 async def advantage_spell_chok(client, msg):
-    mv_rqst = msg.text
+    mv_rqst = msg.text.strip()
     reqstr1 = msg.from_user.id if msg.from_user else 0
     reqstr = await client.get_users(reqstr1)
     settings = await get_settings(msg.chat.id)
 
-#    query = prepare_query(mv_rqst)
+    # Tamil + English queries prepare
     tamil_q, eng_q = prepare_query(mv_rqst)
 
-    # Tamil + English இரண்டையும் search பண்ணுறது
-    g_s = await search_gagala(tamil_q)
-    g_s += await search_gagala(eng_q)
-
-    # raw user text கூட சேர்த்துக்கோ
-    g_s += await search_gagala(mv_rqst)
-
-#    g_s = await search_gagala(query)
-#    g_s += await search_gagala(msg.text)
+    # Google-style advanced search (Tamil + English + Raw text)
+    g_s = []
+    try:
+        g_s += await search_gagala(tamil_q)
+        g_s += await search_gagala(eng_q)
+        g_s += await search_gagala(mv_rqst)
+    except Exception as e:
+        print(f"Error in search_gagala: {e}")
 
     if not g_s:
-        reqst_gle = query.replace(" ", "+")
-        button = [[InlineKeyboardButton("Gᴏᴏɢʟᴇ", url=f"https://www.google.com/search?q={reqst_gle}")]]
+        # No results anywhere → fallback to Google button
+        reqst_gle = mv_rqst.replace(" ", "+")
+        button = [[InlineKeyboardButton("🔎 Gᴏᴏɢʟᴇ", url=f"https://www.google.com/search?q={reqst_gle}")]]
         if NO_RESULTS_MSG:
-            await client.send_message(chat_id=LOG_CHANNEL, text=(script.NORSLTS.format(reqstr.id, reqstr.mention, mv_rqst)))
+            await client.send_message(
+                chat_id=LOG_CHANNEL,
+                text=script.NORSLTS.format(reqstr.id, reqstr.mention, mv_rqst)
+            )
         k = await msg.reply_photo(
-            photo=SPELL_IMG, 
+            photo=SPELL_IMG,
             caption=script.I_CUDNT.format(mv_rqst),
             reply_markup=InlineKeyboardMarkup(button)
         )
@@ -2083,18 +2087,28 @@ async def advantage_spell_chok(client, msg):
         await k.delete()
         return
 
-    # clean results
-    gs_parsed = [re.sub(r'(\(|\)|\-|reviews|full|all)', '', i, flags=re.IGNORECASE) for i in g_s]
-    booklist = [(re.sub(r'(\-|\(|\)|_)', '', i, flags=re.IGNORECASE)).strip() for i in gs_parsed]
+    # Clean results
+    gs_parsed = [
+        re.sub(r'(\(|\)|\-|reviews|full|all)', '', i, flags=re.IGNORECASE)
+        for i in g_s
+    ]
+    booklist = [
+        re.sub(r'(\-|\(|\)|_)', '', i, flags=re.IGNORECASE).strip()
+        for i in gs_parsed
+    ]
     booklist = list(dict.fromkeys(booklist))  # remove duplicates
 
     if not booklist:
-        reqst_gle = query.replace(" ", "+")
-        button = [[InlineKeyboardButton("Gᴏᴏɢʟᴇ", url=f"https://www.google.com/search?q={reqst_gle}")]]
+        # Still nothing after cleanup → fallback again
+        reqst_gle = mv_rqst.replace(" ", "+")
+        button = [[InlineKeyboardButton("🔎 Gᴏᴏɢʟᴇ", url=f"https://www.google.com/search?q={reqst_gle}")]]
         if NO_RESULTS_MSG:
-            await client.send_message(chat_id=LOG_CHANNEL, text=(script.NORSLTS.format(reqstr.id, reqstr.mention, mv_rqst)))
+            await client.send_message(
+                chat_id=LOG_CHANNEL,
+                text=script.NORSLTS.format(reqstr.id, reqstr.mention, mv_rqst)
+            )
         k = await msg.reply_photo(
-            photo=SPELL_IMG, 
+            photo=SPELL_IMG,
             caption=script.I_CUDNT.format(mv_rqst),
             reply_markup=InlineKeyboardMarkup(button)
         )
@@ -2102,33 +2116,32 @@ async def advantage_spell_chok(client, msg):
         await k.delete()
         return
 
+    # Save for callback handling
     SPELL_CHECK[msg.id] = booklist
+
+    # Create buttons
     btn = [[
         InlineKeyboardButton(
             text=book.strip(),
             callback_data=f"spolling#{reqstr1}#{k}",
         )
     ] for k, book in enumerate(booklist)]
-    btn.append([InlineKeyboardButton(text="Close", callback_data=f'spol#{reqstr1}#close_spellcheck')])
+    btn.append([InlineKeyboardButton("❌ Close", callback_data=f"spol#{reqstr1}#close_spellcheck")])
 
+    # Send spell-check suggestion message
     spell_check_del = await msg.reply_photo(
-        photo=(SPELL_IMG),
-        caption=(script.CUDNT_FND.format(mv_rqst)),
+        photo=SPELL_IMG,
+        caption=script.CUDNT_FND.format(mv_rqst),
         reply_markup=InlineKeyboardMarkup(btn)
     )
 
+    # Auto-delete after 60s if enabled
     try:
-        if settings['auto_delete']:
+        if settings.get('auto_delete', False):
             await asyncio.sleep(60)
             await spell_check_del.delete()
-    except KeyError:
-        grpid = await active_connection(str(msg.from_user.id))
-        await save_group_settings(grpid, 'auto_delete', True)
-        settings = await get_settings(msg.chat.id)
-        if settings['auto_delete']:
-            await asyncio.sleep(60)
-            await spell_check_del.delete()
-
+    except Exception as e:
+        print(f"Auto-delete failed: {e}")
 
 async def manual_filters(client, message, text=False):
     settings = await get_settings(message.chat.id)
