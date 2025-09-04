@@ -69,62 +69,94 @@ async def save_file(media):
             return True, 1
 
 
-# ✅ Optimized search
 async def get_search_results(chat_id, query, file_type=None, max_results=10, offset=0, filter=False):
-    """For given query return (results, next_offset, total or None)"""
+    """For given query return (results, next_offset, total_results)"""
     if chat_id is not None:
         settings = await get_settings(int(chat_id))
         try:
-            max_results = 10 if settings['max_btn'] else int(MAX_B_TN)
+            if settings['max_btn']:
+                max_results = 10
+            else:
+                max_results = int(MAX_B_TN)
         except KeyError:
             await save_group_settings(int(chat_id), 'max_btn', False)
             settings = await get_settings(int(chat_id))
-            max_results = 10 if settings['max_btn'] else int(MAX_B_TN)
+            if settings['max_btn']:
+                max_results = 10
+            else:
+                max_results = int(MAX_B_TN)
 
     query = query.strip()
     if not query:
-        return [], "", 0
-
-    # Use text index filter
-    search_filter = {"$text": {"$search": query}}
-
-    if file_type:
-        search_filter["file_type"] = file_type
-
-    cursor = Media.find(search_filter).sort("_id", -1).skip(offset).limit(max_results + 1)
-    files = await cursor.to_list(length=max_results + 1)
-
-    if len(files) > max_results:
-        next_offset = offset + max_results
-        files = files[:max_results]
+        raw_pattern = '.'
+    elif ' ' not in query:
+        raw_pattern = r'(\b|[\.\+\-_])' + query + r'(\b|[\.\+\-_])'
     else:
-        next_offset = ""
+        raw_pattern = query.replace(' ', r'.*[\s\.\+\-_]')
 
-    return files, next_offset, None
-
-
-# ✅ Full fetch (only use for "Send All")
-async def get_bad_files(query, file_type=None, filter=False):
-    query = query.strip()
-    if not query:
-        return [], 0
-
-    regex = re.compile(query, flags=re.IGNORECASE)
+    try:
+        regex = re.compile(raw_pattern, flags=re.IGNORECASE)
+    except:
+        return [], "", 0   # ✅ always return 3 values
 
     if USE_CAPTION_FILTER:
-        search_filter = {'$or': [{'file_name': regex}, {'caption': regex}]}
+        filter = {'$or': [{'file_name': regex}, {'caption': regex}]}
     else:
-        search_filter = {'file_name': regex}
+        filter = {'file_name': regex}
 
     if file_type:
-        search_filter['file_type'] = file_type
+        filter['file_type'] = file_type
 
-    total_results = await Media.count_documents(search_filter)
-    cursor = Media.find(search_filter).sort("_id", -1)
+    try:
+        total_results = await Media.count_documents(filter)
+    except:
+        return [], "", 0   # ✅ safe fallback
+
+    next_offset = offset + max_results
+    if next_offset > total_results:
+        next_offset = ""
+
+    cursor = Media.find(filter)
+    cursor.sort('$natural', -1)
+    cursor.skip(offset).limit(max_results)
+    files = await cursor.to_list(length=max_results)
+
+    return files, next_offset, total_results
+
+
+async def get_bad_files(query, file_type=None, filter=False):
+    """For given query return (results, total_results)"""
+    query = query.strip()
+    if not query:
+        raw_pattern = '.'
+    elif ' ' not in query:
+        raw_pattern = r'(\b|[\.\+\-_])' + query + r'(\b|[\.\+\-_])'
+    else:
+        raw_pattern = query.replace(' ', r'.*[\s\.\+\-_]')
+
+    try:
+        regex = re.compile(raw_pattern, flags=re.IGNORECASE)
+    except:
+        return [], 0   # ✅ always return 2 values
+
+    if USE_CAPTION_FILTER:
+        filter = {'$or': [{'file_name': regex}, {'caption': regex}]}
+    else:
+        filter = {'file_name': regex}
+
+    if file_type:
+        filter['file_type'] = file_type
+
+    try:
+        total_results = await Media.count_documents(filter)
+    except:
+        return [], 0   # ✅ safe fallback
+
+    cursor = Media.find(filter)
+    cursor.sort('$natural', -1)
     files = await cursor.to_list(length=total_results)
 
     return files, total_results
-
 
 async def get_file_details(query):
     filter = {'file_id': query}
