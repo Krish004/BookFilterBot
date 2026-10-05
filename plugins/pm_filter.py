@@ -555,51 +555,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 'An error occurred while processing your request.',
                 show_alert=True
             )
-            
-    elif query.data.startswith("sendfiles"):
-    clicked_user_id = query.from_user.id
-    ident, key = query.data.split("#")
-    settings = await get_settings(query.message.chat.id)
-    pre = 'allfilesp' if settings['file_secure'] else 'allfiles'
-
-    files_ = await get_files_by_key(key)
-    if not files_:
-        return await query.answer('Nᴏ sᴜᴄʜ ғɪʟᴇs ᴇxɪsᴛ.')
-
-    try:
-        for file in files_:
-            file_id = file.file_id
-            title = file.file_name
-            f_caption = file.caption or title
-
-            await client.send_cached_media(
-                chat_id=FILE_FORWARD,
-                file_id=file_id,
-                caption=f_caption,
-                protect_content=True
-            )
-
-        await query.answer(
-            'Files have been sent to the channel.',
-            show_alert=True
-        )
-
-    except UserIsBlocked:
-        await query.answer(
-            '𝐔𝐧𝐛𝐥𝐨𝐜𝐤 𝐭𝐡𝐞 𝐛𝐨𝐭 𝐦𝐚𝐡𝐧 !',
-            show_alert=True
-        )
-    except PeerIdInvalid:
-        await query.answer(
-            'Invalid file ID.',
-            show_alert=True
-        )
-    except Exception as e:
-        logger.exception(e)
-        await query.answer(
-            'An error occurred while processing your request.',
-            show_alert=True
-        )
     
     elif query.data.startswith("del"):
         ident, file_id = query.data.split("#")
