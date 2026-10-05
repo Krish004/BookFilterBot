@@ -510,26 +510,96 @@ async def cb_handler(client: Client, query: CallbackQuery):
             await query.answer(url=f"https://telegram.me/{temp.U_NAME}?start={ident}_{file_id}")
             
     elif query.data.startswith("sendfiles"):
-        clicked = query.from_user.id
+        clicked_user_id = query.from_user.id
         ident, key = query.data.split("#")
         settings = await get_settings(query.message.chat.id)
+        pre = 'allfilesp' if settings['file_secure'] else 'allfiles'
+
+        files_ = await get_files_by_key(key)
+        if not files_:
+            return await query.answer('Nᴏ sᴜᴄʜ ғɪʟᴇs ᴇxɪsᴛ.')
+
         try:
-            if settings['botpm'] and settings['is_shortlink'] and clicked not in PREMIUM_USER:
-                await query.answer(url=f"https://telegram.me/{temp.U_NAME}?start=sendfiles1_{key}")
-                return
-            elif settings['is_shortlink'] and not settings['botpm'] and clicked not in PREMIUM_USER:
-                await query.answer(url=f"https://telegram.me/{temp.U_NAME}?start=sendfiles2_{key}")
-                return
-            else:
-                await query.answer(url=f"https://telegram.me/{temp.U_NAME}?start=allfiles_{key}")
-                return
+            for file in files_:
+                file_id = file.file_id
+                title = file.file_name
+                f_caption = file.caption or title
+
+                await client.send_cached_media(
+                    chat_id=FILE_FORWARD,
+                    file_id=file_id,
+                    caption=f_caption,
+                    protect_content=True
+                )
+
+            await query.answer(
+                'Files have been sent to the channel.',
+                show_alert=True
+            )
+
         except UserIsBlocked:
-            await query.answer('Uɴʙʟᴏᴄᴋ ᴛʜᴇ ʙᴏᴛ ᴍᴀʜɴ !', show_alert=True)
+            await query.answer(
+                '𝐔𝐧𝐛𝐥𝐨𝐜𝐤 𝐭𝐡𝐞 𝐛𝐨𝐭 𝐦𝐚𝐡𝐧 !',
+                show_alert=True
+            )
+
         except PeerIdInvalid:
-            await query.answer(url=f"https://telegram.me/{temp.U_NAME}?start=sendfiles3_{key}")
+            await query.answer(
+                'Invalid file ID.',
+                show_alert=True
+            )
+
         except Exception as e:
             logger.exception(e)
-            await query.answer(url=f"https://telegram.me/{temp.U_NAME}?start=sendfiles4_{key}")
+            await query.answer(
+                'An error occurred while processing your request.',
+                show_alert=True
+            )
+            
+    elif query.data.startswith("sendfiles"):
+    clicked_user_id = query.from_user.id
+    ident, key = query.data.split("#")
+    settings = await get_settings(query.message.chat.id)
+    pre = 'allfilesp' if settings['file_secure'] else 'allfiles'
+
+    files_ = await get_files_by_key(key)
+    if not files_:
+        return await query.answer('Nᴏ sᴜᴄʜ ғɪʟᴇs ᴇxɪsᴛ.')
+
+    try:
+        for file in files_:
+            file_id = file.file_id
+            title = file.file_name
+            f_caption = file.caption or title
+
+            await client.send_cached_media(
+                chat_id=FILE_FORWARD,
+                file_id=file_id,
+                caption=f_caption,
+                protect_content=True
+            )
+
+        await query.answer(
+            'Files have been sent to the channel.',
+            show_alert=True
+        )
+
+    except UserIsBlocked:
+        await query.answer(
+            '𝐔𝐧𝐛𝐥𝐨𝐜𝐤 𝐭𝐡𝐞 𝐛𝐨𝐭 𝐦𝐚𝐡𝐧 !',
+            show_alert=True
+        )
+    except PeerIdInvalid:
+        await query.answer(
+            'Invalid file ID.',
+            show_alert=True
+        )
+    except Exception as e:
+        logger.exception(e)
+        await query.answer(
+            'An error occurred while processing your request.',
+            show_alert=True
+        )
     
     elif query.data.startswith("del"):
         ident, file_id = query.data.split("#")
