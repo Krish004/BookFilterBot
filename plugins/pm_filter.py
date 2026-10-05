@@ -561,7 +561,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("📢 Channel", url=CHNL_LNK),  # we download Link
                                                     InlineKeyboardButton('📽️ Group', url=GRP_LNK)]])  # web stream Link
             )
-            Joel_tmx = await query.message.reply_text(
+            Joel_tgx = await query.message.reply_text(
                 text=script.FILE_MSG.format(query.from_user.mention, title, size),
                 parse_mode=enums.ParseMode.HTML,
                 reply_markup=InlineKeyboardMarkup(
@@ -574,10 +574,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     ]
                 )
             )
-            if settings['auto_delete']:
-                await asyncio.sleep(600)
-                await Joel_tmx.delete()
-                await file_sendd.delete()
             # Notify the user in the group chat
             await query.answer('File has been sent to the channel.', show_alert=True)
 
