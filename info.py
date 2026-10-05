@@ -46,7 +46,7 @@ NO_RESULTS_MSG = bool(environ.get("NO_RESULTS_MSG", True))
 
 #Redirect to Channel
 #Must change this link to work redirect (FILE_FORWORD)
-FILE_FORWARD = environ.get('FILE_FORWARD', 'https://t.me/Tamil5k')
+FILE_FORWARD = environ.get('FILE_FORWARD', 'https://t.me/eTamilbook')
 FILE_CHANNEL = int(environ.get('FILE_CHANNEL', 0))
 
 # MongoDB information
